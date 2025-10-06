@@ -16,7 +16,7 @@ namespace fa {
   };
 
   bool Automaton::addSymbol(char symbol) {
-    if (hasSymbol(symbol) || symbol == fa::Epsilon) {
+    if (!isgraph(symbol) && symbol != fa::Epsilon) {
       return false;
     } else {
       alphabet.insert(symbol);
