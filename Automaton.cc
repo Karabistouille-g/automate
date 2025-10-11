@@ -135,5 +135,26 @@ namespace fa {
       os << std::endl;
     }
   }
+
+  bool Automaton::hasEpsilonTransition() const {
+    if (!hasSymbol(fa::Epsilon)) return false;
+    for (auto state : transitions) {
+      auto &sta = state.second;
+      if (std::find(sta.begin(), sta.end(), fa::Epsilon) == sta.end())
+        return false;
+    }
+    return true;
+  }
+
+  bool Automaton::isDeterministic() const {
+    for (auto state : transitions) {
+      for (auto to : state.second) {
+        if (to.second.size() > 1) return false;
+      }
+    }
+    return true;
+  }
+
+
 }
 
