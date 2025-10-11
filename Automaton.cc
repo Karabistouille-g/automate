@@ -157,11 +157,27 @@ namespace fa {
     return true;
   }
 
+
+
   bool Automaton::isComplete() const {
     for (auto state : transitions) {
       if (state.second.size() != alphabet.size()) return false;
     }
     return true;
+  }
+
+  Automaton Automaton::createComplete(const Automaton& automaton) {
+    if (automaton.isComplete()) return automaton;
+    Automaton comp = automaton;
+    int newState = -1;
+    comp.addState(newState);
+    for (auto from : comp.transitions) {
+      for (auto symbol : comp.alphabet) {
+        if (from.second.find(symbol) == from.second.end()) {
+          comp.addTransition(from.first, symbol, newState);
+        }
+      }
+    }
   }
 }
 
