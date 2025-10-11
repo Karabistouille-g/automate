@@ -148,13 +148,20 @@ namespace fa {
 
   bool Automaton::isDeterministic() const {
     for (auto state : transitions) {
-      for (auto to : state.second) {
-        if (to.second.size() > 1) return false;
+      for (auto alpha : state.second) {
+        auto &to = alpha.second;
+        if (to.size() > 1) return false;
+        if (std::find(to.begin(), to.end(), fa::Epsilon) != to.end()) return false;
       }
     }
     return true;
   }
 
-
+  bool Automaton::isComplete() const {
+    for (auto state : transitions) {
+      if (state.second.size() != alphabet.size()) return false;
+    }
+    return true;
+  }
 }
 
