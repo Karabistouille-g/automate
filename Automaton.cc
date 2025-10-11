@@ -1,5 +1,6 @@
 #include "Automaton.h"
 #include <iostream>
+#include <vector>
 using namespace std;
 
 
@@ -23,6 +24,15 @@ namespace fa {
 
   bool Automaton::removeSymbol(char symbol) {
     if (!hasSymbol(symbol)) return false;
+    std::vector<std::tuple<int, char, int>> to_remove;
+    for (const auto& current : transitions) {
+      if (std::get<1>(current) == symbol) {
+        to_remove.push_back(current);
+      }
+    }
+    for (const auto& t : to_remove) {
+      removeTransition(std::get<0>(t), std::get<1>(t), std::get<2>(t));
+    }
     alphabet.erase(symbol);
     return true;
   }
@@ -36,6 +46,7 @@ namespace fa {
   }
 
   bool Automaton::addState(int state) {
+    if (state < 0) return false;
     if (hasState(state)) return false;
     states.insert({state, NONE});
     return true;
@@ -146,6 +157,13 @@ namespace fa {
   }
 
   bool Automaton::isDeterministic() const {
+    int cpt = 0;
+    for (auto state : states) {
+      if (state.second == INITIAL) {
+        cpt++;
+      }
+      if (cpt > 1) return false;
+    }
     for (auto current : transitions) {
       for (auto check : transitions) {
         if (check == current) continue;
