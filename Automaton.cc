@@ -70,7 +70,7 @@ namespace fa {
   void Automaton::setStateFinal(int state) {
     if (!hasState(state)) return;
     if (isStateFinal(state)) return;
-    initial.push_back(state);
+    final.push_back(state);
   }
 
   bool Automaton::isStateFinal(int state) const {
@@ -92,11 +92,11 @@ namespace fa {
   }
 
   bool Automaton::hasTransition(int from, char alpha, int to) const {
-    if (std::find(transitions.begin(), transitions.end(), from) != transitions.end()) return false;
-    auto transChar = transitions.at(from);
-    if (std::find(transChar.begin(), transChar.end(), alpha) != transChar.end()) return false;
-    auto transInt = transitions.at(from).at(alpha);
-    if (std::find(transInt.begin(), transInt.end(), to) != transInt.end()) return false;
+    if (transitions.find(from) == transitions.end()) return false;
+    auto &transChar = transitions.at(from);
+    if (transChar.find(alpha) == transChar.end()) return false;
+    auto &transInt = transitions.at(from).at(alpha);
+    if (std::find(transInt.begin(), transInt.end(), to) == transInt.end()) return false;
     return true;
   }
 
@@ -140,7 +140,7 @@ namespace fa {
     if (!hasSymbol(fa::Epsilon)) return false;
     for (auto state : transitions) {
       auto &sta = state.second;
-      if (std::find(sta.begin(), sta.end(), fa::Epsilon) == sta.end())
+      if (sta.find(fa::Epsilon) == sta.end())
         return false;
     }
     return true;
@@ -178,6 +178,56 @@ namespace fa {
         }
       }
     }
+    return comp;
+  }
+
+  Automaton Automaton::createComplement(const Automaton& automaton) {
+    return automaton;
+  }
+
+  Automaton Automaton::createMirror(const Automaton& automaton) {
+    Automaton mirror = automaton;
+    mirror.initial = automaton.final;
+    mirror.final = automaton.initial;
+    for (auto from : automaton.transitions) {
+      for (auto alpha : from.second) {
+        for (auto to : alpha.second) {
+          mirror.addTransition(to, alpha.first, from.first);
+        }
+      }
+    }
+    return mirror;
+  }
+
+  std::set<int> Automaton::makeTransition(const std::set<int>& origin, char alpha) const {
+    std::set<int> result;
+    for (auto from : origin) {
+      for (auto to : states) {
+        if (hasTransition(from, alpha, to)) 
+          result.insert(to);
+      }
+    }
+    return result;
+  }
+
+  std::set<int> Automaton::readString(const std::string& word) const {
+    std::set<int> path(initial.begin(), initial.end());
+    for (auto c : word) {
+        path = makeTransition(path, c);
+    }
+    return path;
+  }
+
+  bool Automaton::match(const std::string& word) const {
+    std::set<int> match = readString(word);
+    bool stateInitial = false;
+    bool stateFinal = false;
+    for (auto state : match) {
+      if (isStateInitial(state)) stateInitial = true;
+      if (isStateFinal(state)) stateFinal = true;
+    }
+    if (!stateInitial || !stateFinal) return false;
+    return true;
   }
 }
 
