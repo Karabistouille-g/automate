@@ -6,7 +6,8 @@
 #include <set>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
+#include <vector>
+#include <algorithm>
 
 
 namespace fa {
@@ -226,11 +227,11 @@ namespace fa {
 
 
   private:
-    std::unordered_set<char> alphabet;
-    std::unordered_set<int> states;
-    std::unordered_map<int, std::unordered_map<char, std::unordered_set<int>>> transitions;
-    std::unordered_set<int> initial;
-    std::unordered_set<int> final;
+    std::vector<char> alphabet;
+    std::vector<int> states;
+    std::vector<int> initial;
+    std::vector<int> final;
+    std::unordered_map<int, std::unordered_map<char, std::vector<int>>> transitions;
   };
 
 }
