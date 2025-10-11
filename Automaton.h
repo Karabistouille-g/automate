@@ -5,9 +5,10 @@
 #include <iosfwd>
 #include <set>
 #include <string>
-#include <unordered_map>
-#include <vector>
 #include <algorithm>
+#include <tuple>
+#include <map>
+#include <unordered_set>
 
 
 namespace fa {
@@ -227,11 +228,10 @@ namespace fa {
 
 
   private:
-    std::vector<char> alphabet;
-    std::vector<int> states;
-    std::vector<int> initial;
-    std::vector<int> final;
-    std::unordered_map<int, std::unordered_map<char, std::vector<int>>> transitions;
+    enum STATE { NONE, INITIAL, FINAL, BOTH };
+    std::set<char> alphabet;
+    std::map<int, STATE> states;
+    std::set<std::tuple<int, char, int>> transitions;
   };
 
 }

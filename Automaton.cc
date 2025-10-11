@@ -15,20 +15,20 @@ namespace fa {
   };
 
   bool Automaton::addSymbol(char symbol) {
-    if (!isgraph(symbol) || symbol == fa::Epsilon) return false;
-    alphabet.push_back(symbol);
+    if (!isgraph(symbol) && symbol != fa::Epsilon) return false;
+    if (hasSymbol(symbol)) return false;
+    alphabet.insert(symbol);
     return true;
   }
 
   bool Automaton::removeSymbol(char symbol) {
     if (!hasSymbol(symbol)) return false;
-    alphabet.erase(std::find(alphabet.begin(), alphabet.end(), symbol));
+    alphabet.erase(symbol);
     return true;
   }
 
   bool Automaton::hasSymbol(char symbol) const {
-    auto sym = std::find(alphabet.begin(), alphabet.end(), symbol);
-    return sym != alphabet.end();
+    return alphabet.count(symbol) == 1;
   }
 
   std::size_t Automaton::countSymbols() const {
@@ -37,19 +37,18 @@ namespace fa {
 
   bool Automaton::addState(int state) {
     if (hasState(state)) return false;
-    states.push_back(state);
+    states.insert({state, NONE});
     return true;
   }
 
   bool Automaton::removeState(int state) {
     if (!hasState(state)) return false;
-    states.erase(std::find(states.begin(), states.end(), state));
+    states.erase(state);
     return true;
   }
 
   bool Automaton::hasState(int state) const {
-    auto sta = std::find(states.begin(), states.end(), state);
-    return sta != states.end();
+    return states.count(state) == 1;
   }
 
   std::size_t Automaton::countStates() const {
@@ -59,125 +58,146 @@ namespace fa {
   void Automaton::setStateInitial(int state) {
     if (!hasState(state)) return;
     if (isStateInitial(state)) return;
-    initial.push_back(state);
+    if (isStateFinal(state)) {
+      states[state] = BOTH;
+      return;
+    }
+    states[state] = INITIAL;
   }
 
   bool Automaton::isStateInitial(int state) const {
-    auto sta = std::find(initial.begin(), initial.end(), state);
-    return sta != initial.end();
+    if (states.count(state) == 0) return false;
+    return states.at(state) == INITIAL || states.at(state) == BOTH;
   }
 
   void Automaton::setStateFinal(int state) {
     if (!hasState(state)) return;
     if (isStateFinal(state)) return;
-    final.push_back(state);
+    if (isStateInitial(state)) {
+      states[state] = BOTH;
+      return;
+    }
+    states[state] = FINAL;
   }
 
   bool Automaton::isStateFinal(int state) const {
-    auto sta = std::find(final.begin(), final.end(), state);
-    return sta != final.end();
+    if (states.count(state) == 0) return false;
+    return states.at(state) == FINAL || states.at(state) == BOTH;
   }
 
   bool Automaton::addTransition(int from, char alpha, int to) {
     if (hasTransition(from, alpha, to)) return false;
-    transitions[from][alpha].push_back(to);
+    transitions.insert(std::make_tuple(from, alpha, to));
     return true;
   }
 
   bool Automaton::removeTransition(int from, char alpha, int to) {
     if (!hasTransition(from, alpha, to)) return false;
-    auto &trans = transitions[from][alpha];
-    trans.erase(std::find(trans.begin(), trans.end(), to));
+    transitions.erase(std::make_tuple(from, alpha, to));
     return true;
   }
 
   bool Automaton::hasTransition(int from, char alpha, int to) const {
-    if (transitions.find(from) == transitions.end()) return false;
-    auto &transChar = transitions.at(from);
-    if (transChar.find(alpha) == transChar.end()) return false;
-    auto &transInt = transitions.at(from).at(alpha);
-    if (std::find(transInt.begin(), transInt.end(), to) == transInt.end()) return false;
-    return true;
+    return transitions.count(std::make_tuple(from, alpha, to)) == 1;
   }
 
   std::size_t Automaton::countTransitions() const{
-    std::size_t total = 0;
-    for (auto &pairFrom : transitions) {
-        for (auto &pairAlpha : pairFrom.second) {
-            total += pairAlpha.second.size();
-        }
-    }
-    return total;
+    return transitions.size();
   }
 
-  void Automaton::prettyPrint(std::ostream& os) const {
-    os << "Initial states :" << std::endl;
-    os << "    ";
-    for (auto state : initial)
-      os << state << " ";
-    os << endl;
-
-    os << "Final States :" << std::endl;
-    os << "    ";
-    for (auto state : final)
-      os << state << " ";
-    os << endl;
-
-    os << "Transitions :" << std::endl;
-    os << "    ";
-    for (auto from : transitions) {
-      os << "For state " << from.first << " : " << std::endl;
-      for (auto alpha : from.second) {
-        os << "        For letter" << alpha.first << " :";
-        for (auto to : alpha.second)
-          os << " " << to;
+  void Automaton::prettyPrint(std::ostream& os) const{
+    os << "Initial states : "<< std::endl;
+    for (auto state : states) {
+      if(isStateInitial(state.first)){
+        os << state.first << " ";
       }
-      os << std::endl;
     }
+    os << std::endl;
+    os << "Final states : " << std::endl;
+    for (auto state : states) {
+      if(isStateFinal(state.first)){
+        os << state.first << " ";
+      }
+    }
+    os << std::endl;
+    os << "Transitions:" << std::endl;
+    for (auto state : states) {
+      os << "For state " << state.first << ":" << std::endl;
+      for (auto c : alphabet) {
+        os << "  For letter " << c << ": ";
+        for (const auto &i : transitions){
+          if((state.first == std::get<0>(i)) && (c==std::get<1>(i))){
+            os << std::get<2>(i) << " ";
+          }
+        }
+        os << std::endl;
+      }
+    }
+    return ;
   }
 
   bool Automaton::hasEpsilonTransition() const {
     if (!hasSymbol(fa::Epsilon)) return false;
     for (auto state : transitions) {
-      auto &sta = state.second;
-      if (sta.find(fa::Epsilon) == sta.end())
-        return false;
+      if (std::get<1>(state) == (fa::Epsilon))
+        return true;
     }
-    return true;
+    return false;
   }
 
   bool Automaton::isDeterministic() const {
-    for (auto state : transitions) {
-      for (auto alpha : state.second) {
-        auto &to = alpha.second;
-        if (to.size() > 1) return false;
-        if (std::find(to.begin(), to.end(), fa::Epsilon) != to.end()) return false;
+    for (auto current : transitions) {
+      for (auto check : transitions) {
+        if (check == current) continue;
+        if (std::get<0>(current) == std::get<0>(check)) {
+          if (std::get<1>(current) == std::get<1>(check)) {
+            return false;
+          }
+        }
       }
     }
     return true;
   }
 
-
-
-  bool Automaton::isComplete() const {
-    for (auto state : transitions) {
-      if (state.second.size() != alphabet.size()) return false;
+    bool Automaton::isComplete() const {
+      for (const auto& state : states) {
+        int s = state.first;
+        for (char c : alphabet) {
+          bool found = false;
+          for (const auto& t : transitions) {
+            if (std::get<0>(t) == s && std::get<1>(t) == c) {
+              found = true;
+              break;
+            }
+          }
+          if (!found) return false;
+        }
+      }
+      return true;
     }
-    return true;
-  }
 
   Automaton Automaton::createComplete(const Automaton& automaton) {
     if (automaton.isComplete()) return automaton;
     Automaton comp = automaton;
-    int newState = -1;
+    auto it = std::prev(comp.states.end());
+    int newState = it->first + 1;
     comp.addState(newState);
-    for (auto from : comp.transitions) {
-      for (auto symbol : comp.alphabet) {
-        if (from.second.find(symbol) == from.second.end()) {
-          comp.addTransition(from.first, symbol, newState);
+    for (char c : comp.alphabet) {
+      comp.addTransition(newState, c, newState);
+    }
+    for (const auto& state : comp.states) {
+        int s = state.first;
+        for (char c : comp.alphabet) {
+          bool found = false;
+          for (const auto& t : comp.transitions) {
+            if (std::get<0>(t) == s && std::get<1>(t) == c) {
+              found = true;
+              break;
+            }
+          }
+          if (!found) comp.addTransition(s, c, newState);
         }
       }
-    }
     return comp;
   }
 
@@ -187,33 +207,60 @@ namespace fa {
 
   Automaton Automaton::createMirror(const Automaton& automaton) {
     Automaton mirror = automaton;
-    mirror.initial = automaton.final;
-    mirror.final = automaton.initial;
-    for (auto from : automaton.transitions) {
-      for (auto alpha : from.second) {
-        for (auto to : alpha.second) {
-          mirror.addTransition(to, alpha.first, from.first);
-        }
+
+    std::set<int> tempInitial;
+    for (auto state : mirror.states) {
+      if(mirror.isStateInitial(state.first)){
+        tempInitial.insert(state.first);
       }
     }
+
+    std::set<int> tempFinal;
+    for (auto state : mirror.states) {
+      if(mirror.isStateFinal(state.first)){
+        tempFinal.insert(state.first);
+      }
+    }
+
+    for (auto state : tempInitial) {
+      mirror.states[state] = INITIAL;
+    }
+
+    for (auto state : tempFinal) {
+      if (mirror.states[state] == INITIAL) {
+        mirror.states[state] = BOTH;
+      } else {
+        mirror.states[state] = FINAL;
+      }
+    }
+
+    for (auto tuple : automaton.transitions) {
+      mirror.addTransition(std::get<2>(tuple), std::get<1>(tuple), std::get<0>(tuple));
+    }
+
     return mirror;
   }
 
   std::set<int> Automaton::makeTransition(const std::set<int>& origin, char alpha) const {
     std::set<int> result;
     for (auto from : origin) {
-      for (auto to : states) {
-        if (hasTransition(from, alpha, to)) 
-          result.insert(to);
+      for (auto current : states) {
+        if (hasTransition(from, alpha, current.first))
+          result.insert(current.first);
       }
     }
     return result;
   }
 
   std::set<int> Automaton::readString(const std::string& word) const {
-    std::set<int> path(initial.begin(), initial.end());
+    std::set<int> path;
+    for (auto state : states) {
+      if (state.second == INITIAL || state.second == BOTH) {
+        path.insert(state.first);
+      }
+    }
     for (auto c : word) {
-        path = makeTransition(path, c);
+      path = makeTransition(path, c);
     }
     return path;
   }
