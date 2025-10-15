@@ -294,5 +294,44 @@ namespace fa {
     if (!stateInitial || !stateFinal) return false;
     return true;
   }
+
+  bool Automaton::isLanguageEmpty() const {
+    std::vector<int> queue;
+    std::set<int> visited;
+
+    for (auto s : states) {
+      if (isStateInitial(s.first)) {
+          queue.push_back(s.first);
+          visited.insert(s.first);
+      }
+    }
+    while (!queue.empty()) {
+      int state = queue.back();
+      queue.pop_back();
+      if (isStateFinal(state)) {
+        return false;
+      }
+      for (auto t : transitions) {
+        if (std::get<0>(t) == state) {
+          int next = std::get<2>(t);
+          if (visited.find(next) == visited.end()) {
+            queue.push_back(next);
+            visited.insert(next);
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  // Automate doit reste valide sauf si il n'a pas d'état initial ?
+  void removeNonAccessibleStates() {
+
+  } 
+
+  // Automate doit reste valide sauf si il n'a pas d'état initial ?
+  void removeNonCoAccessibleStates() {
+
+  }
 }
 
