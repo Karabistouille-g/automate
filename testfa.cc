@@ -593,6 +593,184 @@ TEST(Mirror, createMirror) {
 }
 
 /**
+ * Attendu : retourne tous les états avec pour transitions un symbol donnée et une liste d'état donné
+ */
+TEST(MakeTransitions, makeTransitions) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addState(1));
+  EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addState(3));
+  EXPECT_TRUE(fa.addState(4));
+  EXPECT_TRUE(fa.addState(5));
+  EXPECT_TRUE(fa.addSymbol('a'));
+  fa.setStateInitial(1);
+  fa.setStateFinal(4);
+  EXPECT_TRUE(fa.addTransition(1, 'a', 2));
+  EXPECT_TRUE(fa.addTransition(1, 'a', 3));
+  EXPECT_TRUE(fa.addTransition(2, 'a', 5));
+  EXPECT_TRUE(fa.addTransition(3, 'a', 4));
+  EXPECT_TRUE(fa.addTransition(4, 'a', 5));
+  std::set<int> initial;
+  initial.insert(1);
+  initial.insert(2);
+  std::set<int> final;
+  final.insert(2);
+  final.insert(3);
+  final.insert(5);
+  EXPECT_EQ(fa.makeTransition(initial, 'a'), final);
+}
+
+/**
+ * Attendu : retourne tous l'état final pour un mot donné
+ */
+TEST(ReadString, readString) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addState(1));
+  EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addState(3));
+  EXPECT_TRUE(fa.addSymbol('a'));
+  EXPECT_TRUE(fa.addSymbol('b'));
+  fa.setStateInitial(1);
+  fa.setStateFinal(3);
+  EXPECT_TRUE(fa.addTransition(1, 'a', 2));
+  EXPECT_TRUE(fa.addTransition(1, 'b', 3));
+  EXPECT_TRUE(fa.addTransition(2, 'a', 2));
+  EXPECT_TRUE(fa.addTransition(2, 'b', 3));
+  std::set<int> final;
+  final.insert(3);
+  EXPECT_EQ(fa.readString("ab"), final);
+}
+
+/**
+ * Attendu : retourne tous les états finaux pour un mot donné
+ */
+TEST(ReadString, readStringTwoFinalState) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addState(1));
+  EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addState(3));
+  EXPECT_TRUE(fa.addState(4));
+  EXPECT_TRUE(fa.addState(5));
+  EXPECT_TRUE(fa.addSymbol('a'));
+  EXPECT_TRUE(fa.addSymbol('b'));
+  fa.setStateInitial(1);
+  fa.setStateFinal(3);
+  fa.setStateFinal(5);
+  EXPECT_TRUE(fa.addTransition(1, 'a', 2));
+  EXPECT_TRUE(fa.addTransition(1, 'b', 3));
+  EXPECT_TRUE(fa.addTransition(2, 'a', 2));
+  EXPECT_TRUE(fa.addTransition(2, 'b', 3));
+  EXPECT_TRUE(fa.addTransition(1, 'a', 4));
+  EXPECT_TRUE(fa.addTransition(4, 'b', 5));
+  std::set<int> final;
+  final.insert(3);
+  final.insert(5);
+  EXPECT_EQ(fa.readString("ab"), final);
+}
+
+/**
+ * Attendu : retourne l'état 2
+ */
+TEST(ReadString, readStringNoFinalState) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addState(1));
+  EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addState(3));
+  EXPECT_TRUE(fa.addState(4));
+  EXPECT_TRUE(fa.addState(5));
+  EXPECT_TRUE(fa.addSymbol('a'));
+  EXPECT_TRUE(fa.addSymbol('b'));
+  EXPECT_TRUE(fa.addSymbol('c'));
+  fa.setStateInitial(1);
+  fa.setStateFinal(3);
+  fa.setStateFinal(5);
+  EXPECT_TRUE(fa.addTransition(1, 'c', 2));
+  EXPECT_TRUE(fa.addTransition(1, 'b', 3));
+  EXPECT_TRUE(fa.addTransition(2, 'a', 2));
+  EXPECT_TRUE(fa.addTransition(2, 'b', 3));
+  EXPECT_TRUE(fa.addTransition(1, 'a', 4));
+  EXPECT_TRUE(fa.addTransition(4, 'b', 5));
+  std::set<int> final;
+  final.insert(2);
+  EXPECT_EQ(fa.readString("c"), final);
+}
+
+/**
+ * Attendu : retourne rien
+ */
+TEST(ReadString, readStringNoTransition) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addState(1));
+  EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addState(3));
+  EXPECT_TRUE(fa.addState(4));
+  EXPECT_TRUE(fa.addState(5));
+  EXPECT_TRUE(fa.addSymbol('a'));
+  EXPECT_TRUE(fa.addSymbol('b'));
+  EXPECT_TRUE(fa.addSymbol('c'));
+  fa.setStateInitial(1);
+  fa.setStateFinal(3);
+  fa.setStateFinal(5);
+  EXPECT_TRUE(fa.addTransition(1, 'a', 2));
+  EXPECT_TRUE(fa.addTransition(1, 'b', 3));
+  EXPECT_TRUE(fa.addTransition(2, 'a', 2));
+  EXPECT_TRUE(fa.addTransition(2, 'b', 3));
+  EXPECT_TRUE(fa.addTransition(1, 'a', 4));
+  EXPECT_TRUE(fa.addTransition(4, 'b', 5));
+  std::set<int> final;
+  EXPECT_EQ(fa.readString("c"), final);
+}
+
+/**
+ * Attendu : retourne tous les états finaux pour un mot donné
+ */
+TEST(Match, match) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addState(1));
+  EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addState(3));
+  EXPECT_TRUE(fa.addState(4));
+  EXPECT_TRUE(fa.addState(5));
+  EXPECT_TRUE(fa.addSymbol('a'));
+  EXPECT_TRUE(fa.addSymbol('b'));
+  fa.setStateInitial(1);
+  fa.setStateFinal(3);
+  fa.setStateFinal(5);
+  EXPECT_TRUE(fa.addTransition(1, 'a', 2));
+  EXPECT_TRUE(fa.addTransition(1, 'b', 3));
+  EXPECT_TRUE(fa.addTransition(2, 'a', 2));
+  EXPECT_TRUE(fa.addTransition(2, 'b', 3));
+  EXPECT_TRUE(fa.addTransition(1, 'a', 4));
+  EXPECT_TRUE(fa.addTransition(4, 'b', 5));
+  EXPECT_TRUE(fa.match("ab"));
+}
+
+/**
+ * Attendu : retourne tous les états finaux pour un mot donné
+ */
+TEST(Match, noMatch) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addState(1));
+  EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addState(3));
+  EXPECT_TRUE(fa.addState(4));
+  EXPECT_TRUE(fa.addState(5));
+  EXPECT_TRUE(fa.addSymbol('a'));
+  EXPECT_TRUE(fa.addSymbol('b'));
+  EXPECT_TRUE(fa.addSymbol('c'));
+  fa.setStateInitial(1);
+  fa.setStateFinal(3);
+  fa.setStateFinal(5);
+  EXPECT_TRUE(fa.addTransition(1, 'c', 2));
+  EXPECT_TRUE(fa.addTransition(1, 'b', 3));
+  EXPECT_TRUE(fa.addTransition(2, 'a', 2));
+  EXPECT_TRUE(fa.addTransition(2, 'b', 3));
+  EXPECT_TRUE(fa.addTransition(1, 'a', 4));
+  EXPECT_TRUE(fa.addTransition(4, 'b', 5));
+  EXPECT_FALSE(fa.match("c"));
+}
+
+/**
  * Attendu : le langage est vide
  */
 TEST(LanguageEmpty, isLanguageEmpty) {

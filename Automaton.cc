@@ -297,10 +297,9 @@ namespace fa {
     bool stateInitial = false;
     bool stateFinal = false;
     for (auto state : match) {
-      if (isStateInitial(state)) stateInitial = true;
       if (isStateFinal(state)) stateFinal = true;
     }
-    if (!stateInitial || !stateFinal) return false;
+    if (!stateFinal) return false;
     return true;
   }
 
