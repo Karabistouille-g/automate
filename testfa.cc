@@ -30,6 +30,15 @@ TEST(AddSymbol, addSymbolSpace) {
 }
 
 /**
+ * Attendu : on ne peut pas rajouter un state négatif
+ */
+TEST(AddSymbol, addNegativeState) {
+  fa::Automaton fa;
+  EXPECT_FALSE(fa.addState(-1));
+  EXPECT_FALSE(fa.hasState(-1));
+}
+
+/**
  * Attendu : le symbol espace n'est pas rajouté
  */
 TEST(AddSymbol, addEpsilon) {
@@ -275,7 +284,7 @@ TEST(Final, setFinalDontExist) {
 /**
  * Attendu : la transition a été correctement ajouté
  */
-TEST(Transition, addTransition) {
+TEST(AddTransition, addTransition) {
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -287,7 +296,7 @@ TEST(Transition, addTransition) {
 /**
  * Attendu : la transition a été correctement supprimé
  */
-TEST(Transition, removeTransition) {
+TEST(RemoveTransition, removeTransition) {
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -300,7 +309,7 @@ TEST(Transition, removeTransition) {
 /**
  * Attendu : supprimé une transition qui n'existe pas
  */
-TEST(Transition, removeTransitionDontExist) {
+TEST(RemoveTransition, removeTransitionDontExist) {
   fa::Automaton fa;
   EXPECT_FALSE(fa.removeTransition(1, 'a', 2));
 }
@@ -308,7 +317,7 @@ TEST(Transition, removeTransitionDontExist) {
 /**
  * Attendu : le nombre de symbole est égale à un
  */
-TEST(Transition, countOneTransition) {
+TEST(CountTransition, countOneTransition) {
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -320,7 +329,7 @@ TEST(Transition, countOneTransition) {
 /**
  * Attendu : le nombre de symbole est égale à 0
  */
-TEST(Transition, countZeroTransition) {
+TEST(CountTransition, countZeroTransition) {
   fa::Automaton fa;
   EXPECT_EQ(fa.countTransitions(), static_cast<size_t>(0));
 }
@@ -329,7 +338,7 @@ TEST(Transition, countZeroTransition) {
 /**
  * Attendu : le nombre de symbole est égale à 2
  */
-TEST(Transition, countTwoTransition) {
+TEST(CountTransition, countTwoTransition) {
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -342,13 +351,24 @@ TEST(Transition, countTwoTransition) {
 /**
  * Attendu : le nombre de transition est égale à 1 pour éviter les doublons
  */
-TEST(Transition, addSameTransition) {
+TEST(AddTransition, addSameTransition) {
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
   EXPECT_TRUE(fa.addSymbol('a'));
   EXPECT_TRUE(fa.addTransition(1, 'a', 2));
   EXPECT_FALSE(fa.addTransition(1, 'a', 2));
+  EXPECT_EQ(fa.countTransitions(), static_cast<size_t>(1));
+}
+
+/**
+ * Attendu : ajouter une transition qui boucle sur le même état
+ */
+TEST(AddTransition, addTransitionSameState) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addState(1));
+  EXPECT_TRUE(fa.addSymbol('a'));
+  EXPECT_TRUE(fa.addTransition(1, 'a', 1));
   EXPECT_EQ(fa.countTransitions(), static_cast<size_t>(1));
 }
 
@@ -414,6 +434,20 @@ TEST(Epsilon, HasNotEpsilonTransition) {
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
   EXPECT_TRUE(fa.addTransition(1, 'a', 2));
+  EXPECT_FALSE(fa.hasEpsilonTransition());
+}
+
+/**
+ * Attendu : il y a un epsilon transition supprimé
+ */
+TEST(Epsilon, removeEpsilonTransition) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addSymbol(fa::Epsilon));
+  EXPECT_TRUE(fa.addState(1));
+  EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addTransition(1, fa::Epsilon, 2));
+  EXPECT_TRUE(fa.hasEpsilonTransition());
+  EXPECT_TRUE(fa.removeTransition(1, fa::Epsilon, 2));
   EXPECT_FALSE(fa.hasEpsilonTransition());
 }
 
@@ -529,6 +563,36 @@ TEST(Complete, isNotCompleteState) {
 }
 
 /**
+ * Attendu : l'automate n'est pas complet
+ */
+TEST(Mirror, createMirror) {
+  fa::Automaton fa;
+  fa::Automaton mirror;
+  EXPECT_TRUE(fa.addState(1));
+  EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addState(3));
+  EXPECT_TRUE(fa.addSymbol('a'));
+  EXPECT_TRUE(fa.addSymbol('b'));
+  fa.setStateInitial(1);
+  fa.setStateFinal(3);
+  EXPECT_TRUE(fa.addTransition(1, 'a', 2));
+  EXPECT_TRUE(fa.addTransition(1, 'b', 3));
+  EXPECT_TRUE(fa.addTransition(2, 'a', 3));
+  EXPECT_TRUE(fa.addTransition(2, 'b', 2));
+  EXPECT_TRUE(fa.addTransition(3, 'a', 3));
+  EXPECT_TRUE(fa.addTransition(3, 'b', 3));
+  mirror = fa.createMirror(fa);
+  mirror.isStateFinal(1);
+  mirror.setStateInitial(3);
+  EXPECT_TRUE(mirror.hasTransition(2, 'a', 1));
+  EXPECT_TRUE(mirror.hasTransition(3, 'b', 1));
+  EXPECT_TRUE(mirror.hasTransition(3, 'a', 2));
+  EXPECT_TRUE(mirror.hasTransition(2, 'b', 2));
+  EXPECT_TRUE(mirror.hasTransition(3, 'a', 3));
+  EXPECT_TRUE(mirror.hasTransition(3, 'b', 3));
+}
+
+/**
  * Attendu : le langage est vide
  */
 TEST(LanguageEmpty, isLanguageEmpty) {
@@ -540,6 +604,42 @@ TEST(LanguageEmpty, isLanguageEmpty) {
   fa.setStateFinal(2);
   EXPECT_TRUE(fa.addTransition(1, 'a', 2));
   EXPECT_FALSE(fa.isLanguageEmpty());
+}
+
+/**
+ * Attendu : supprime les états non accessibles
+ */
+TEST(RemoveNonAccessible, removeNonAccessible) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addState(1));
+  EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addState(3));
+  EXPECT_TRUE(fa.addSymbol('a'));
+  fa.setStateInitial(1);
+  fa.setStateFinal(2);
+  EXPECT_TRUE(fa.addTransition(1, 'a', 2));
+  EXPECT_TRUE(fa.addTransition(3, 'a', 2));
+  fa.removeNonAccessibleStates();
+  EXPECT_FALSE(fa.hasState(3));
+  EXPECT_FALSE(fa.hasTransition(3, 'a', 2));
+}
+
+/**
+ * Attendu : supprime les états non co accessibles
+ */
+TEST(RemoveNonCoAccessible, removeNonCoAccessible) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addState(1));
+  EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addState(3));
+  EXPECT_TRUE(fa.addSymbol('a'));
+  fa.setStateInitial(1);
+  fa.setStateFinal(2);
+  EXPECT_TRUE(fa.addTransition(1, 'a', 2));
+  EXPECT_TRUE(fa.addTransition(2, 'a', 3));
+  fa.removeNonCoAccessibleStates();
+  EXPECT_FALSE(fa.hasState(3));
+  EXPECT_FALSE(fa.hasTransition(3, 'a', 2));
 }
 
 // TODO état avec transitions aa e

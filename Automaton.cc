@@ -24,14 +24,14 @@ namespace fa {
 
   bool Automaton::removeSymbol(char symbol) {
     if (!hasSymbol(symbol)) return false;
-    std::vector<std::tuple<int, char, int>> to_remove;
-    for (const auto& current : transitions) {
+    std::vector<std::tuple<int, char, int>> remove;
+    for (auto current : transitions) {
       if (std::get<1>(current) == symbol) {
-        to_remove.push_back(current);
+        remove.push_back(current);
       }
     }
-    for (const auto& t : to_remove) {
-      removeTransition(std::get<0>(t), std::get<1>(t), std::get<2>(t));
+    for (auto rm : remove) {
+      removeTransition(std::get<0>(rm), std::get<1>(rm), std::get<2>(rm));
     }
     alphabet.erase(symbol);
     return true;
@@ -54,6 +54,15 @@ namespace fa {
 
   bool Automaton::removeState(int state) {
     if (!hasState(state)) return false;
+    std::vector<std::tuple<int, char, int>> remove;
+    for (auto current : transitions) {
+      if (std::get<0>(current) == state || std::get<2>(current) == state) {
+        remove.push_back(current);
+      }
+    }
+    for (auto rm : remove) {
+      removeTransition(std::get<0>(rm), std::get<1>(rm), std::get<2>(rm));
+    }
     states.erase(state);
     return true;
   }
@@ -325,13 +334,73 @@ namespace fa {
   }
 
   // Automate doit reste valide sauf si il n'a pas d'état initial ?
-  void removeNonAccessibleStates() {
+  void Automaton::removeNonAccessibleStates() {
+    std::vector<int> queue;
+    std::set<int> visited;
 
+    for (auto s : states) {
+      if (isStateInitial(s.first)) {
+          queue.push_back(s.first);
+          visited.insert(s.first);
+      }
+    }
+    while (!queue.empty()) {
+      int state = queue.back();
+      queue.pop_back();
+      for (auto t : transitions) {
+        if (std::get<0>(t) == state) {
+          int next = std::get<2>(t);
+          if (visited.find(next) == visited.end()) {
+            queue.push_back(next);
+            visited.insert(next);
+          }
+        }
+      }
+    }
+    std::vector<int> remove;
+    for (auto current : states) {
+      if (visited.find(current.first) == visited.end()) {
+        remove.push_back(current.first);
+      }
+    }
+    for (auto rm : remove) {
+      removeState(rm);
+    }
   } 
 
   // Automate doit reste valide sauf si il n'a pas d'état initial ?
-  void removeNonCoAccessibleStates() {
+  void Automaton::removeNonCoAccessibleStates() {
+    std::vector<int> queue;
+    std::set<int> visited;
 
+    for (auto s : states) {
+      if (isStateFinal(s.first)) {
+          queue.push_back(s.first);
+          visited.insert(s.first);
+      }
+    }
+    while (!queue.empty()) {
+      int state = queue.back();
+      queue.pop_back();
+      for (auto t : transitions) {
+        if (std::get<2>(t) == state) {
+          int next = std::get<0>(t);
+          if (visited.find(next) == visited.end()) {
+            queue.push_back(next);
+            visited.insert(next);
+          }
+        }
+      }
+    }
+    std::vector<int> remove;
+    for (auto current : states) {
+      if (visited.find(current.first) == visited.end()) {
+        remove.push_back(current.first);
+      }
+    }
+    for (auto rm : remove) {
+      removeState(rm);
+    }
   }
 }
 
