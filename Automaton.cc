@@ -186,7 +186,7 @@ namespace fa {
     return true;
   }
 
-    bool Automaton::isComplete() const {
+  bool Automaton::isComplete() const {
       for (const auto& state : states) {
         int s = state.first;
         for (char c : alphabet) {
@@ -400,6 +400,56 @@ namespace fa {
     for (auto rm : remove) {
       removeState(rm);
     }
+  }
+
+  bool Automaton::hasEmptyIntersectionWith(const Automaton& other) const {
+    return false;
+  }
+
+  bool Automaton::isIncludedIn(const Automaton& other) const {
+    return false;
+  }
+
+  Automaton Automaton::createIntersection(const Automaton& lhs, const Automaton& rhs) {
+    Automaton first = lhs;
+    Automaton second = rhs;
+
+    if (!first.isDeterministic()) first = first.createDeterministic(first);
+    if (!second.isDeterministic()) second = second.createDeterministic(second);
+
+    for (char c : second.alphabet) first.addSymbol(c);
+    for (char c : first.alphabet) second.addSymbol(c);
+    
+    if (!first.isComplete()) first = first.createComplement(first);
+    if (!second.isComplete()) second = second.createComplement(second);
+
+    // Vérifier si il existe un seul état initial
+    int firstInitial;
+    int secondInitial;
+    for (auto s : first.states) {
+      if (first.isStateInitial(s.first)) {
+        firstInitial = s.first;
+        break;
+      }
+    }
+    for (auto s : second.states) {
+      if (second.isStateInitial(s.first)) {
+        secondInitial = s.first;
+        break;
+      }
+    }
+  }
+
+  Automaton Automaton::createDeterministic(const Automaton& other) {
+    return other;
+  }
+
+  Automaton Automaton::createMinimalMoore(const Automaton& other) {
+    return other;
+  }
+
+  Automaton Automaton::createMinimalBrzozowski(const Automaton& other) {
+    return other;
   }
 }
 
