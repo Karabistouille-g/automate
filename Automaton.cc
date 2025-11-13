@@ -16,7 +16,7 @@ namespace fa {
   };
 
   bool Automaton::addSymbol(char symbol) {
-    if (!isgraph(symbol) && symbol != fa::Epsilon) return false;
+    if (!isgraph(symbol)) return false;
     if (hasSymbol(symbol)) return false;
     alphabet.insert(symbol);
     return true;
@@ -107,6 +107,9 @@ namespace fa {
 
   bool Automaton::addTransition(int from, char alpha, int to) {
     if (hasTransition(from, alpha, to)) return false;
+    if (!hasState(from)) return false;
+    if (!hasState(to)) return false;
+    if (!hasSymbol(alpha)) return false;
     transitions.insert(std::make_tuple(from, alpha, to));
     return true;
   }
@@ -413,30 +416,53 @@ namespace fa {
   Automaton Automaton::createIntersection(const Automaton& lhs, const Automaton& rhs) {
     Automaton first = lhs;
     Automaton second = rhs;
+    Automaton final;
 
     if (!first.isDeterministic()) first = first.createDeterministic(first);
     if (!second.isDeterministic()) second = second.createDeterministic(second);
 
     for (char c : second.alphabet) first.addSymbol(c);
     for (char c : first.alphabet) second.addSymbol(c);
+    final.alphabet = first.alphabet;
     
-    if (!first.isComplete()) first = first.createComplement(first);
-    if (!second.isComplete()) second = second.createComplement(second);
+    if (!first.isComplete()) first = first.createComplete(first);
+    if (!second.isComplete()) second = second.createComplete(second);
 
-    // Vérifier si il existe un seul état initial
+    std::set<int> nextFirst;
+    std::set<int> nextSecond;
+
     int firstInitial;
     int secondInitial;
     for (auto s : first.states) {
       if (first.isStateInitial(s.first)) {
         firstInitial = s.first;
+        nextFirst.insert(s.first);
         break;
       }
     }
     for (auto s : second.states) {
       if (second.isStateInitial(s.first)) {
         secondInitial = s.first;
+        nextSecond.insert(secondInitial);
         break;
       }
+    }
+
+    int cpt = 0;
+    std::map<std::pair<int, int>, int> translate;
+    std::vector<std::pair<int, int>> queue;
+    queue.push_back({firstInitial, secondInitial});
+
+    translate.insert({{firstInitial, secondInitial}, cpt});
+    final.addState(0);
+    final.setStateInitial(0);
+    cpt++;
+
+
+    std::pair<int, int> current;
+    for (char c : final.alphabet) {
+      first.makeTransition(nextFirst, c);
+      second.makeTransition(nextSecond, c);
     }
   }
 

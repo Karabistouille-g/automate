@@ -43,8 +43,8 @@ TEST(AddSymbol, addNegativeState) {
  */
 TEST(AddSymbol, addEpsilon) {
   fa::Automaton fa;
-  EXPECT_TRUE(fa.addSymbol(fa::Epsilon));
-  EXPECT_TRUE(fa.hasSymbol(fa::Epsilon));
+  EXPECT_FALSE(fa.addSymbol(fa::Epsilon));
+  EXPECT_FALSE(fa.hasSymbol(fa::Epsilon));
 }
 
 /**
@@ -291,6 +291,39 @@ TEST(AddTransition, addTransition) {
   EXPECT_TRUE(fa.addSymbol('a'));
   EXPECT_TRUE(fa.addTransition(1, 'a', 2));
   EXPECT_TRUE(fa.hasTransition(1, 'a', 2));
+}
+
+/**
+ * Attendu : la transition ne se créer pas par manque d'origine
+ */
+TEST(AddTransition, addTransitionUnknowOrigin) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addSymbol('a'));
+  EXPECT_FALSE(fa.addTransition(1, 'a', 2));
+  EXPECT_FALSE(fa.hasTransition(1, 'a', 2));
+}
+
+/**
+ * Attendu : la transition ne se créer pas par manque de destination
+ */
+TEST(AddTransition, addTransitionUnknowTarget) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addSymbol('a'));
+  EXPECT_FALSE(fa.addTransition(2, 'a', 1));
+  EXPECT_FALSE(fa.hasTransition(2, 'a', 1));
+}
+
+/**
+ * Attendu : la transition ne se créer pas par manque de symbol
+ */
+TEST(AddTransition, addTransitionUnknowTarget) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addState(1));
+  EXPECT_FALSE(fa.addTransition(2, 'a', 1));
+  EXPECT_FALSE(fa.hasTransition(2, 'a', 1));
 }
 
 /**
