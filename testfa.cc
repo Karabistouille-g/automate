@@ -39,15 +39,6 @@ TEST(AddSymbol, addNegativeState) {
 }
 
 /**
- * Attendu : le symbol espace n'est pas rajouté
- */
-TEST(AddSymbol, addEpsilon) {
-  fa::Automaton fa;
-  EXPECT_FALSE(fa.addSymbol(fa::Epsilon));
-  EXPECT_FALSE(fa.hasSymbol(fa::Epsilon));
-}
-
-/**
  * Attendu : n'accepte pas les symbols non ascii
  */
 TEST(AddSymbol, addNonASCII) {
@@ -318,7 +309,7 @@ TEST(AddTransition, addTransitionUnknowTarget) {
 /**
  * Attendu : la transition ne se créer pas par manque de symbol
  */
-TEST(AddTransition, addTransitionUnknowTarget) {
+TEST(AddTransition, addTransitionUnknowSymbol) {
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(2));
   EXPECT_TRUE(fa.addState(1));
@@ -412,6 +403,8 @@ TEST(Valid, isValid) {
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addSymbol('a'));
+  fa.setStateInitial(1);
+  fa.setStateFinal(1);
   EXPECT_TRUE(fa.isValid());
 }
 
@@ -438,10 +431,21 @@ TEST(Valid, isValidNoState) {
  */
 TEST(Epsilon, hasEpsilon) {
   fa::Automaton fa;
-  EXPECT_TRUE(fa.addSymbol(fa::Epsilon));
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
   EXPECT_TRUE(fa.addTransition(1, fa::Epsilon, 2));
+  EXPECT_TRUE(fa.hasEpsilonTransition());
+}
+
+/**
+ * Attendu : il y a 2 epsilone transition
+ */
+TEST(Epsilon, hasEpsilonTwice) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addState(1));
+  EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addTransition(1, fa::Epsilon, 2));
+  EXPECT_TRUE(fa.addTransition(2, fa::Epsilon, 1));
   EXPECT_TRUE(fa.hasEpsilonTransition());
 }
 
@@ -463,7 +467,6 @@ TEST(Epsilon, HasNotEpsilon) {
 TEST(Epsilon, HasNotEpsilonTransition) {
   fa::Automaton fa;
   EXPECT_TRUE(fa.addSymbol('a'));
-  EXPECT_TRUE(fa.addSymbol(fa::Epsilon));
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
   EXPECT_TRUE(fa.addTransition(1, 'a', 2));
@@ -475,7 +478,6 @@ TEST(Epsilon, HasNotEpsilonTransition) {
  */
 TEST(Epsilon, removeEpsilonTransition) {
   fa::Automaton fa;
-  EXPECT_TRUE(fa.addSymbol(fa::Epsilon));
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
   EXPECT_TRUE(fa.addTransition(1, fa::Epsilon, 2));
@@ -492,8 +494,22 @@ TEST(Deterministic, isDeterministic) {
   EXPECT_TRUE(fa.addSymbol('a'));
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
+  fa.setStateInitial(1);
+  fa.setStateFinal(2);
   EXPECT_TRUE(fa.addTransition(1, 'a', 2));
   EXPECT_TRUE(fa.isDeterministic());
+}
+
+/**
+ * Attendu : l'automate n'est pas déterministe car 0 state initial
+ */
+TEST(Deterministic, isDeterministicNoInitialState) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addSymbol('a'));
+  EXPECT_TRUE(fa.addState(1));
+  EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addTransition(1, 'a', 2));
+  EXPECT_FALSE(fa.isDeterministic());
 }
 
 /**
@@ -542,15 +558,14 @@ TEST(Deterministic, isDeterministicWithTwoFinalState) {
   EXPECT_TRUE(fa.addSymbol('b'));
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addState(3));
   fa.setStateInitial(1);
   fa.setStateFinal(2);
+  fa.setStateFinal(3);
   EXPECT_TRUE(fa.addTransition(1, 'a', 2));
   EXPECT_TRUE(fa.addTransition(1, 'b', 3));
   EXPECT_TRUE(fa.addTransition(2, 'a', 1));
   EXPECT_TRUE(fa.addTransition(2, 'b', 1));
-
-  EXPECT_TRUE(fa.addState(3));
-  fa.setStateFinal(3);
   EXPECT_TRUE(fa.addTransition(3, 'a', 1));
   EXPECT_TRUE(fa.addTransition(3, 'b', 1));
   EXPECT_TRUE(fa.isDeterministic());
@@ -851,6 +866,50 @@ TEST(RemoveNonCoAccessible, removeNonCoAccessible) {
   fa.removeNonCoAccessibleStates();
   EXPECT_FALSE(fa.hasState(3));
   EXPECT_FALSE(fa.hasTransition(3, 'a', 2));
+}
+
+/**
+ * Attendu : créer un automate qui est l'intersection des 2 automates
+ */
+TEST(CreateIntersection, createIntersection) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addState(1));
+  EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addSymbol('a'));
+  EXPECT_TRUE(fa.addSymbol('b'));
+  fa.setStateInitial(1);
+  fa.setStateFinal(2);
+  EXPECT_TRUE(fa.addTransition(1, 'a', 2));
+  EXPECT_TRUE(fa.addTransition(2, 'a', 2));
+  EXPECT_TRUE(fa.addTransition(2, 'b', 2));
+
+  fa::Automaton fo;
+  EXPECT_TRUE(fo.addState(1));
+  EXPECT_TRUE(fo.addState(2));
+  EXPECT_TRUE(fo.addSymbol('a'));
+  EXPECT_TRUE(fo.addSymbol('b'));
+  fo.setStateInitial(1);
+  fo.setStateFinal(2);
+  EXPECT_TRUE(fo.addTransition(1, 'a', 1));
+  EXPECT_TRUE(fo.addTransition(1, 'b', 2));
+  EXPECT_TRUE(fo.addTransition(2, 'b', 2));
+  EXPECT_TRUE(fo.addTransition(2, 'a', 1));
+
+  fa::Automaton fao;
+  EXPECT_TRUE(fao.addState(1));
+  EXPECT_TRUE(fao.addState(2));
+  EXPECT_TRUE(fao.addState(3));
+  EXPECT_TRUE(fao.addSymbol('a'));
+  EXPECT_TRUE(fao.addSymbol('b'));
+  fao.setStateInitial(1);
+  fao.setStateFinal(3);
+  EXPECT_TRUE(fao.addTransition(1, 'a', 2));
+  EXPECT_TRUE(fao.addTransition(2, 'a', 2));
+  EXPECT_TRUE(fao.addTransition(2, 'b', 3));
+  EXPECT_TRUE(fao.addTransition(3, 'b', 3));
+  EXPECT_TRUE(fao.addTransition(3, 'a', 2));
+
+  fa::Automaton newfao = fa.createIntersection(fa, fo);
 }
 
 // TODO état avec transitions aa e

@@ -13,7 +13,7 @@ namespace fa {
     if (alphabet.empty()) return false;
     if (states.empty()) return false;
     return true;
-  };
+  }
 
   bool Automaton::addSymbol(char symbol) {
     if (!isgraph(symbol)) return false;
@@ -109,7 +109,7 @@ namespace fa {
     if (hasTransition(from, alpha, to)) return false;
     if (!hasState(from)) return false;
     if (!hasState(to)) return false;
-    if (!hasSymbol(alpha)) return false;
+    if (!hasSymbol(alpha) && alpha != fa::Epsilon) return false;
     transitions.insert(std::make_tuple(from, alpha, to));
     return true;
   }
@@ -160,7 +160,6 @@ namespace fa {
   }
 
   bool Automaton::hasEpsilonTransition() const {
-    if (!hasSymbol(fa::Epsilon)) return false;
     for (auto state : transitions) {
       if (std::get<1>(state) == (fa::Epsilon))
         return true;
@@ -169,13 +168,18 @@ namespace fa {
   }
 
   bool Automaton::isDeterministic() const {
-    int cpt = 0;
+    int cptInitial = 0;
+    int cptFinal = 0;
     for (auto state : states) {
-      if (state.second == INITIAL) {
-        cpt++;
+      if (state.second == INITIAL || state.second == BOTH) {
+        cptInitial++;
       }
-      if (cpt > 1) return false;
+      if (state.second == FINAL || state.second == BOTH) {
+        cptFinal++;
+      } 
     }
+    if (cptInitial != 1) return false;
+    if (cptFinal < 1) return false;
     for (auto current : transitions) {
       for (auto check : transitions) {
         if (check == current) continue;
@@ -239,16 +243,16 @@ namespace fa {
     Automaton mirror = automaton;
 
     std::set<int> tempInitial;
+    std::set<int> tempFinal;
     for (auto state : mirror.states) {
       if(mirror.isStateInitial(state.first)){
-        tempInitial.insert(state.first);
+        tempFinal.insert(state.first);
       }
     }
 
-    std::set<int> tempFinal;
     for (auto state : mirror.states) {
       if(mirror.isStateFinal(state.first)){
-        tempFinal.insert(state.first);
+        tempInitial.insert(state.first);
       }
     }
 
@@ -297,7 +301,6 @@ namespace fa {
 
   bool Automaton::match(const std::string& word) const {
     std::set<int> match = readString(word);
-    bool stateInitial = false;
     bool stateFinal = false;
     for (auto state : match) {
       if (isStateFinal(state)) stateFinal = true;
@@ -418,21 +421,21 @@ namespace fa {
     Automaton second = rhs;
     Automaton final;
 
-    if (!first.isDeterministic()) first = first.createDeterministic(first);
-    if (!second.isDeterministic()) second = second.createDeterministic(second);
+    if (!first.isDeterministic()) first = Automaton::createDeterministic(first);
+    if (!second.isDeterministic()) second = Automaton::createDeterministic(second);
 
     for (char c : second.alphabet) first.addSymbol(c);
     for (char c : first.alphabet) second.addSymbol(c);
     final.alphabet = first.alphabet;
     
-    if (!first.isComplete()) first = first.createComplete(first);
-    if (!second.isComplete()) second = second.createComplete(second);
+    if (!first.isComplete()) first = Automaton::createComplete(first);
+    if (!second.isComplete()) second = Automaton::createComplete(second);
 
     std::set<int> nextFirst;
     std::set<int> nextSecond;
 
-    int firstInitial;
-    int secondInitial;
+    int firstInitial = 0;
+    int secondInitial = 0;
     for (auto s : first.states) {
       if (first.isStateInitial(s.first)) {
         firstInitial = s.first;
@@ -458,12 +461,31 @@ namespace fa {
     final.setStateInitial(0);
     cpt++;
 
+    while (!queue.empty()) {
+      std::pair<int, int> current = queue.front();
+      queue.erase(queue.begin());
+      int stateA = current.first;
+      int stateB = current.second;
+      int newStart = translate[current];
+      for (char c : final.alphabet) {
+        std::set<int> nextStateA = first.makeTransition({stateA}, c);
+        int newStateA = *nextStateA.begin();
+        std::set<int> nextStateB = second.makeTransition({stateB}, c);
+        int newStateB = *nextStateB.begin();
 
-    std::pair<int, int> current;
-    for (char c : final.alphabet) {
-      first.makeTransition(nextFirst, c);
-      second.makeTransition(nextSecond, c);
+        std::pair<int, int> newCouple = {newStateA, newStateB};
+        if (translate.count(newCouple) == 0) {
+          translate.insert({newCouple, cpt});
+          final.addState(cpt);
+          if (first.isStateFinal(newStateA) && second.isStateFinal(newStateB)) final.setStateFinal(cpt);
+          cpt++;
+          queue.push_back(newCouple);
+        }
+        int newTarget = translate[newCouple];
+        final.addTransition(newStart, c, newTarget);
+      }
     }
+    return final;
   }
 
   Automaton Automaton::createDeterministic(const Automaton& other) {
