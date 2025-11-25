@@ -168,32 +168,30 @@ namespace fa {
   }
 
   bool Automaton::isDeterministic() const {
-    int cptInitial = 0;
-    int cptFinal = 0;
+
+    if (hasEpsilonTransition()) return false;
+
+    int cpt = 0;
     for (auto state : states) {
-      if (state.second == INITIAL || state.second == BOTH) {
-        cptInitial++;
-      }
-      if (state.second == FINAL || state.second == BOTH) {
-        cptFinal++;
-      } 
+      if (isStateInitial(state.first)) cpt++;
     }
-    if (cptInitial != 1) return false;
-    if (cptFinal < 1) return false;
-    for (auto current : transitions) {
-      for (auto check : transitions) {
-        if (check == current) continue;
-        if (std::get<0>(current) == std::get<0>(check)) {
-          if (std::get<1>(current) == std::get<1>(check)) {
-            return false;
-          }
-        }
-      }
+    if (cpt != 1) return false;
+
+    std::set<std::pair<int, char>> seen;
+    for (auto t : transitions) {
+      int from = std::get<0>(t);
+      char alpha = std::get<1>(t);
+      if (seen.count({from, alpha}) == 1) return false;
+      seen.insert({from, alpha});
     }
     return true;
   }
 
   bool Automaton::isComplete() const {
+
+    if (hasEpsilonTransition()) return false;
+
+    
       for (const auto& state : states) {
         int s = state.first;
         for (char c : alphabet) {
