@@ -992,6 +992,24 @@ TEST(CreateIntersection, createIntersection)
   fa::Automaton newfao = fa.createIntersection(fa, fo);
 }
 
+TEST (LanguageEmpty, DeepGalland) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addState(1));
+  EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addSymbol('a'));
+  EXPECT_TRUE(fa.addSymbol('b'));
+  fa.setStateInitial(1);
+  fa.setStateFinal(2);
+  for (int i = 3; i < 5000; i++) {
+    EXPECT_TRUE(fa.addState(i));
+    EXPECT_TRUE(fa.addTransition(i - 1, 'a', i));
+    EXPECT_TRUE(fa.addTransition(i - 1, 'b', i));
+  }
+  EXPECT_TRUE(fa.addTransition(4999, 'a', 2));
+  EXPECT_TRUE(fa.addTransition(4999, 'b', 2));
+  EXPECT_TRUE(fa.isLanguageEmpty());
+}
+
 // TODO état avec transitions aa e
 
 int main(int argc, char **argv)
