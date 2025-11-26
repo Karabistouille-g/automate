@@ -3,10 +3,13 @@
 
 #include "Automaton.h"
 
+#include <iostream>
+
 /**
  * Attendu : la fonction ne considère pas l'automate comme valide
  */
-TEST(Valid, isNotValid) {
+TEST(Valid, isNotValid)
+{
   fa::Automaton fa;
   EXPECT_FALSE(fa.isValid());
 }
@@ -14,7 +17,8 @@ TEST(Valid, isNotValid) {
 /**
  * Attendu : le symbole a été correctement ajouté
  */
-TEST(AddSymbol, addSymbol) {
+TEST(AddSymbol, addSymbol)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addSymbol('a'));
   EXPECT_TRUE(fa.hasSymbol('a'));
@@ -23,7 +27,8 @@ TEST(AddSymbol, addSymbol) {
 /**
  * Attendu : le symbol espace n'est pas rajouté
  */
-TEST(AddSymbol, addSymbolSpace) {
+TEST(AddSymbol, addSymbolSpace)
+{
   fa::Automaton fa;
   EXPECT_FALSE(fa.addSymbol(' '));
   EXPECT_FALSE(fa.hasSymbol(' '));
@@ -32,7 +37,8 @@ TEST(AddSymbol, addSymbolSpace) {
 /**
  * Attendu : on ne peut pas rajouter un state négatif
  */
-TEST(AddSymbol, addNegativeState) {
+TEST(AddSymbol, addNegativeState)
+{
   fa::Automaton fa;
   EXPECT_FALSE(fa.addState(-1));
   EXPECT_FALSE(fa.hasState(-1));
@@ -41,7 +47,8 @@ TEST(AddSymbol, addNegativeState) {
 /**
  * Attendu : n'accepte pas les symbols non ascii
  */
-TEST(AddSymbol, addNonASCII) {
+TEST(AddSymbol, addNonASCII)
+{
   fa::Automaton fa;
   EXPECT_FALSE(fa.addSymbol('\n'));
   EXPECT_FALSE(fa.hasSymbol('\n'));
@@ -50,7 +57,8 @@ TEST(AddSymbol, addNonASCII) {
 /**
  * Attendu : le symbole a été correctement supprimé
  */
-TEST(RemoveSymbol, removeSymbol) {
+TEST(RemoveSymbol, removeSymbol)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addSymbol('a'));
   EXPECT_TRUE(fa.removeSymbol('a'));
@@ -60,7 +68,8 @@ TEST(RemoveSymbol, removeSymbol) {
 /**
  * Attendu : supprimé un symbole qui n'existe pas
  */
-TEST(RemoveSymbol, removeSymbolDontExist) {
+TEST(RemoveSymbol, removeSymbolDontExist)
+{
   fa::Automaton fa;
   EXPECT_FALSE(fa.removeSymbol('a'));
 }
@@ -68,7 +77,8 @@ TEST(RemoveSymbol, removeSymbolDontExist) {
 /**
  * Attendue : le nombre de symbole est égale à un
  */
-TEST(Symbol, countOneSymbol) {
+TEST(Symbol, countOneSymbol)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addSymbol('a'));
   EXPECT_EQ(fa.countSymbols(), static_cast<size_t>(1));
@@ -77,16 +87,17 @@ TEST(Symbol, countOneSymbol) {
 /**
  * Attendue : le nombre de symbole est égale à 0
  */
-TEST(Symbol, countZeroSymbol) {
+TEST(Symbol, countZeroSymbol)
+{
   fa::Automaton fa;
   EXPECT_EQ(fa.countSymbols(), static_cast<size_t>(0));
 }
 
-
 /**
  * Attendue : le nombre de symbole est égale à 2
  */
-TEST(Symbol, countTwoSymbol) {
+TEST(Symbol, countTwoSymbol)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addSymbol('a'));
   EXPECT_TRUE(fa.addSymbol('b'));
@@ -96,7 +107,8 @@ TEST(Symbol, countTwoSymbol) {
 /**
  * Attendue : le nombre de symbole est égale à 1 pour éviter les doublons
  */
-TEST(AddSymbol, addSameSymbol) {
+TEST(AddSymbol, addSameSymbol)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addSymbol('a'));
   EXPECT_FALSE(fa.addSymbol('a'));
@@ -106,7 +118,8 @@ TEST(AddSymbol, addSameSymbol) {
 /**
  * Attendue : supprimer les transitions qui ont le symbol supprimer
  */
-TEST(RemoveSymbol, removeSymbolInTransition) {
+TEST(RemoveSymbol, removeSymbolInTransition)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -122,7 +135,8 @@ TEST(RemoveSymbol, removeSymbolInTransition) {
 /**
  * Attendue : ajout d'un état
  */
-TEST(AddState, addState) {
+TEST(AddState, addState)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.hasState(1));
@@ -131,7 +145,8 @@ TEST(AddState, addState) {
 /**
  * Attendu : l'état a été correctement supprimé
  */
-TEST(RemoveState, removeState) {
+TEST(RemoveState, removeState)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.removeState(1));
@@ -141,33 +156,36 @@ TEST(RemoveState, removeState) {
 /**
  * Attendu : supprimé un état qui n'existe pas
  */
-TEST(RemoveState, removeStateDontExist) {
+TEST(RemoveState, removeStateDontExist)
+{
   fa::Automaton fa;
-  EXPECT_FALSE(fa.removeSymbol(1));
+  EXPECT_FALSE(fa.removeState(1));
 }
 
 /**
  * Attendue : le nombre d'état est égale à 1
  */
-TEST(State, countOneState) {
+TEST(State, countOneState)
+{
   fa::Automaton fa;
-  EXPECT_TRUE(fa.addSymbol('a'));
-  EXPECT_EQ(fa.countSymbols(), static_cast<size_t>(1));
+  EXPECT_TRUE(fa.addState('a'));
+  EXPECT_EQ(fa.countStates(), static_cast<size_t>(1));
 }
 
 /**
  * Attendue : le nombre d'état est égale à 0
  */
-TEST(State, countZeroState) {
+TEST(State, countZeroState)
+{
   fa::Automaton fa;
   EXPECT_EQ(fa.countStates(), static_cast<size_t>(0));
 }
 
-
 /**
  * Attendue : le nombre d'état est égale à 2
  */
-TEST(State, countTwoState) {
+TEST(State, countTwoState)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -177,7 +195,8 @@ TEST(State, countTwoState) {
 /**
  * Attendue : le nombre d'état est égale à 1 pour éviter les doublons
  */
-TEST(AddState, addSameState) {
+TEST(AddState, addSameState)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_FALSE(fa.addState(1));
@@ -187,7 +206,8 @@ TEST(AddState, addSameState) {
 /**
  * Attendue : l'état est supprimé avec toutes les transitions
  */
-TEST(RemoveState, removeStateTransition) {
+TEST(RemoveState, removeStateTransition)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -204,7 +224,8 @@ TEST(RemoveState, removeStateTransition) {
 /**
  * Attendue : ajout d'un état initial
  */
-TEST(Initial, isInitial) {
+TEST(Initial, isInitial)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   fa.setStateInitial(1);
@@ -214,7 +235,8 @@ TEST(Initial, isInitial) {
 /**
  * Attendue : un état non initial
  */
-TEST(Initial, isNotInitial) {
+TEST(Initial, isNotInitial)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_FALSE(fa.isStateInitial(1));
@@ -223,7 +245,8 @@ TEST(Initial, isNotInitial) {
 /**
  * Attendue : un état qui n'existe pas
  */
-TEST(Initial, isInitialDontExist) {
+TEST(Initial, isInitialDontExist)
+{
   fa::Automaton fa;
   EXPECT_FALSE(fa.isStateInitial(1));
 }
@@ -231,7 +254,8 @@ TEST(Initial, isInitialDontExist) {
 /**
  * Attendue : un état qui n'existe pas
  */
-TEST(Initial, setInitialDontExist) {
+TEST(Initial, setInitialDontExist)
+{
   fa::Automaton fa;
   fa.setStateInitial(1);
   EXPECT_FALSE(fa.isStateInitial(1));
@@ -240,7 +264,8 @@ TEST(Initial, setInitialDontExist) {
 /**
  * Attendue : ajout d'un état initial
  */
-TEST(Final, setFinal) {
+TEST(Final, setFinal)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   fa.setStateFinal(1);
@@ -250,7 +275,8 @@ TEST(Final, setFinal) {
 /**
  * Attendue : un état non initial
  */
-TEST(Final, isNotFinal) {
+TEST(Final, isNotFinal)
+{
   fa::Automaton fa;
   EXPECT_FALSE(fa.isStateFinal(1));
 }
@@ -258,7 +284,8 @@ TEST(Final, isNotFinal) {
 /**
  * Attendue : un état qui n'existe pas
  */
-TEST(Final, isFinalDontExist) {
+TEST(Final, isFinalDontExist)
+{
   fa::Automaton fa;
   EXPECT_FALSE(fa.isStateFinal(1));
 }
@@ -266,7 +293,8 @@ TEST(Final, isFinalDontExist) {
 /**
  * Attendue : un état qui n'existe pas
  */
-TEST(Final, setFinalDontExist) {
+TEST(Final, setFinalDontExist)
+{
   fa::Automaton fa;
   fa.setStateFinal(1);
   EXPECT_FALSE(fa.isStateFinal(1));
@@ -275,7 +303,8 @@ TEST(Final, setFinalDontExist) {
 /**
  * Attendu : la transition a été correctement ajouté
  */
-TEST(AddTransition, addTransition) {
+TEST(AddTransition, addTransition)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -287,7 +316,8 @@ TEST(AddTransition, addTransition) {
 /**
  * Attendu : la transition ne se créer pas par manque d'origine
  */
-TEST(AddTransition, addTransitionUnknowOrigin) {
+TEST(AddTransition, addTransitionUnknowOrigin)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(2));
   EXPECT_TRUE(fa.addSymbol('a'));
@@ -298,7 +328,8 @@ TEST(AddTransition, addTransitionUnknowOrigin) {
 /**
  * Attendu : la transition ne se créer pas par manque de destination
  */
-TEST(AddTransition, addTransitionUnknowTarget) {
+TEST(AddTransition, addTransitionUnknowTarget)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(2));
   EXPECT_TRUE(fa.addSymbol('a'));
@@ -309,7 +340,8 @@ TEST(AddTransition, addTransitionUnknowTarget) {
 /**
  * Attendu : la transition ne se créer pas par manque de symbol
  */
-TEST(AddTransition, addTransitionUnknowSymbol) {
+TEST(AddTransition, addTransitionUnknowSymbol)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(2));
   EXPECT_TRUE(fa.addState(1));
@@ -320,7 +352,8 @@ TEST(AddTransition, addTransitionUnknowSymbol) {
 /**
  * Attendu : la transition a été correctement supprimé
  */
-TEST(RemoveTransition, removeTransition) {
+TEST(RemoveTransition, removeTransition)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -333,7 +366,8 @@ TEST(RemoveTransition, removeTransition) {
 /**
  * Attendu : supprimé une transition qui n'existe pas
  */
-TEST(RemoveTransition, removeTransitionDontExist) {
+TEST(RemoveTransition, removeTransitionDontExist)
+{
   fa::Automaton fa;
   EXPECT_FALSE(fa.removeTransition(1, 'a', 2));
 }
@@ -341,7 +375,8 @@ TEST(RemoveTransition, removeTransitionDontExist) {
 /**
  * Attendu : le nombre de symbole est égale à un
  */
-TEST(CountTransition, countOneTransition) {
+TEST(CountTransition, countOneTransition)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -353,16 +388,17 @@ TEST(CountTransition, countOneTransition) {
 /**
  * Attendu : le nombre de symbole est égale à 0
  */
-TEST(CountTransition, countZeroTransition) {
+TEST(CountTransition, countZeroTransition)
+{
   fa::Automaton fa;
   EXPECT_EQ(fa.countTransitions(), static_cast<size_t>(0));
 }
 
-
 /**
  * Attendu : le nombre de symbole est égale à 2
  */
-TEST(CountTransition, countTwoTransition) {
+TEST(CountTransition, countTwoTransition)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -375,7 +411,8 @@ TEST(CountTransition, countTwoTransition) {
 /**
  * Attendu : le nombre de transition est égale à 1 pour éviter les doublons
  */
-TEST(AddTransition, addSameTransition) {
+TEST(AddTransition, addSameTransition)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -388,7 +425,8 @@ TEST(AddTransition, addSameTransition) {
 /**
  * Attendu : ajouter une transition qui boucle sur le même état
  */
-TEST(AddTransition, addTransitionSameState) {
+TEST(AddTransition, addTransitionSameState)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addSymbol('a'));
@@ -399,7 +437,8 @@ TEST(AddTransition, addTransitionSameState) {
 /**
  * Attendu : l'automate est valide
  */
-TEST(Valid, isValid) {
+TEST(Valid, isValid)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addSymbol('a'));
@@ -411,7 +450,8 @@ TEST(Valid, isValid) {
 /**
  * Attendu : l'automate n'est pas valide
  */
-TEST(Valid, isValidNoSymbol) {
+TEST(Valid, isValidNoSymbol)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_FALSE(fa.isValid());
@@ -420,7 +460,8 @@ TEST(Valid, isValidNoSymbol) {
 /**
  * Attendu : l'automate n'est pas valide
  */
-TEST(Valid, isValidNoState) {
+TEST(Valid, isValidNoState)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addSymbol('a'));
   EXPECT_FALSE(fa.isValid());
@@ -429,7 +470,8 @@ TEST(Valid, isValidNoState) {
 /**
  * Attendu : il y a un epsilone transition
  */
-TEST(Epsilon, hasEpsilon) {
+TEST(Epsilon, hasEpsilon)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -440,7 +482,8 @@ TEST(Epsilon, hasEpsilon) {
 /**
  * Attendu : il y a 2 epsilone transition
  */
-TEST(Epsilon, hasEpsilonTwice) {
+TEST(Epsilon, hasEpsilonTwice)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -452,7 +495,8 @@ TEST(Epsilon, hasEpsilonTwice) {
 /**
  * Attendu : il n'y a pas d'epsilone transition
  */
-TEST(Epsilon, HasNotEpsilon) {
+TEST(Epsilon, HasNotEpsilon)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addSymbol('a'));
   EXPECT_TRUE(fa.addState(1));
@@ -464,7 +508,8 @@ TEST(Epsilon, HasNotEpsilon) {
 /**
  * Attendu : il y a un epsilon mais pas de transition
  */
-TEST(Epsilon, HasNotEpsilonTransition) {
+TEST(Epsilon, HasNotEpsilonTransition)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addSymbol('a'));
   EXPECT_TRUE(fa.addState(1));
@@ -476,7 +521,8 @@ TEST(Epsilon, HasNotEpsilonTransition) {
 /**
  * Attendu : il y a un epsilon transition supprimé
  */
-TEST(Epsilon, removeEpsilonTransition) {
+TEST(Epsilon, removeEpsilonTransition)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -487,9 +533,10 @@ TEST(Epsilon, removeEpsilonTransition) {
 }
 
 /**
- * Attendu : l'automate est déterministe 
+ * Attendu : l'automate est déterministe
  */
-TEST(Deterministic, isDeterministic) {
+TEST(Deterministic, isDeterministic)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addSymbol('a'));
   EXPECT_TRUE(fa.addState(1));
@@ -503,7 +550,8 @@ TEST(Deterministic, isDeterministic) {
 /**
  * Attendu : l'automate n'est pas déterministe car 0 state initial
  */
-TEST(Deterministic, isDeterministicNoInitialState) {
+TEST(Deterministic, isDeterministicNoInitialState)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addSymbol('a'));
   EXPECT_TRUE(fa.addState(1));
@@ -513,9 +561,10 @@ TEST(Deterministic, isDeterministicNoInitialState) {
 }
 
 /**
- * Attendu : l'automate n'est pas déterministe 
+ * Attendu : l'automate n'est pas déterministe
  */
-TEST(Deterministic, isNotDeterministic) {
+TEST(Deterministic, isNotDeterministic)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addSymbol('a'));
   EXPECT_TRUE(fa.addState(1));
@@ -529,7 +578,8 @@ TEST(Deterministic, isNotDeterministic) {
 /**
  * Attendu : l'automate n'est pas déterministe car 2 états initiaux
  */
-TEST(Deterministic, isDeterministicWithTwoInitialState) {
+TEST(Deterministic, isDeterministicWithTwoInitialState)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addSymbol('a'));
   EXPECT_TRUE(fa.addSymbol('b'));
@@ -552,7 +602,8 @@ TEST(Deterministic, isDeterministicWithTwoInitialState) {
 /**
  * Attendu : l'automate n'est pas déterministe car 2 états initiaux
  */
-TEST(Deterministic, isDeterministicWithTwoFinalState) {
+TEST(Deterministic, isDeterministicWithTwoFinalState)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addSymbol('a'));
   EXPECT_TRUE(fa.addSymbol('b'));
@@ -572,9 +623,23 @@ TEST(Deterministic, isDeterministicWithTwoFinalState) {
 }
 
 /**
+ * Attendu : un des états de l'automate est à l'ouest
+ */
+TEST(Deterministic, isDeterministicInOuest)
+{
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addState(1));
+  EXPECT_TRUE(fa.addState(2));
+  fa.setStateInitial(1);
+  fa.setStateFinal(1);
+  EXPECT_TRUE(fa.isDeterministic());
+}
+
+/**
  * Attendu : l'automate est complet
  */
-TEST(Complete, isComplete) {
+TEST(Complete, isComplete)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -587,7 +652,8 @@ TEST(Complete, isComplete) {
 /**
  * Attendu : l'automate n'est pas complet
  */
-TEST(Complete, isNotCompleteSymbol) {
+TEST(Complete, isNotCompleteSymbol)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -600,7 +666,8 @@ TEST(Complete, isNotCompleteSymbol) {
 /**
  * Attendu : l'automate n'est pas complet
  */
-TEST(Complete, isNotCompleteState) {
+TEST(Complete, isNotCompleteState)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -613,7 +680,8 @@ TEST(Complete, isNotCompleteState) {
 /**
  * Attendu : l'automate n'est pas complet
  */
-TEST(Mirror, createMirror) {
+TEST(Mirror, createMirror)
+{
   fa::Automaton fa;
   fa::Automaton mirror;
   EXPECT_TRUE(fa.addState(1));
@@ -630,20 +698,22 @@ TEST(Mirror, createMirror) {
   EXPECT_TRUE(fa.addTransition(3, 'a', 3));
   EXPECT_TRUE(fa.addTransition(3, 'b', 3));
   mirror = fa.createMirror(fa);
-  mirror.isStateFinal(1);
-  mirror.setStateInitial(3);
+  EXPECT_TRUE(mirror.isStateFinal(1));
+  EXPECT_TRUE(mirror.isStateInitial(3));
   EXPECT_TRUE(mirror.hasTransition(2, 'a', 1));
   EXPECT_TRUE(mirror.hasTransition(3, 'b', 1));
   EXPECT_TRUE(mirror.hasTransition(3, 'a', 2));
   EXPECT_TRUE(mirror.hasTransition(2, 'b', 2));
   EXPECT_TRUE(mirror.hasTransition(3, 'a', 3));
   EXPECT_TRUE(mirror.hasTransition(3, 'b', 3));
+  mirror.prettyPrint(std::cout);
 }
 
 /**
  * Attendu : retourne tous les états avec pour transitions un symbol donnée et une liste d'état donné
  */
-TEST(MakeTransitions, makeTransitions) {
+TEST(MakeTransitions, makeTransitions)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -671,7 +741,8 @@ TEST(MakeTransitions, makeTransitions) {
 /**
  * Attendu : retourne tous l'état final pour un mot donné
  */
-TEST(ReadString, readString) {
+TEST(ReadString, readString)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -692,7 +763,8 @@ TEST(ReadString, readString) {
 /**
  * Attendu : retourne tous les états finaux pour un mot donné
  */
-TEST(ReadString, readStringTwoFinalState) {
+TEST(ReadString, readStringTwoFinalState)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -719,7 +791,8 @@ TEST(ReadString, readStringTwoFinalState) {
 /**
  * Attendu : retourne l'état 2
  */
-TEST(ReadString, readStringNoFinalState) {
+TEST(ReadString, readStringNoFinalState)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -746,7 +819,8 @@ TEST(ReadString, readStringNoFinalState) {
 /**
  * Attendu : retourne rien
  */
-TEST(ReadString, readStringNoTransition) {
+TEST(ReadString, readStringNoTransition)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -772,7 +846,8 @@ TEST(ReadString, readStringNoTransition) {
 /**
  * Attendu : retourne tous les états finaux pour un mot donné
  */
-TEST(Match, match) {
+TEST(Match, match)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -796,7 +871,8 @@ TEST(Match, match) {
 /**
  * Attendu : retourne tous les états finaux pour un mot donné
  */
-TEST(Match, noMatch) {
+TEST(Match, noMatch)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -821,7 +897,8 @@ TEST(Match, noMatch) {
 /**
  * Attendu : le langage est vide
  */
-TEST(LanguageEmpty, isLanguageEmpty) {
+TEST(LanguageEmpty, isLanguageEmpty)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -835,7 +912,8 @@ TEST(LanguageEmpty, isLanguageEmpty) {
 /**
  * Attendu : supprime les états non accessibles
  */
-TEST(RemoveNonAccessible, removeNonAccessible) {
+TEST(RemoveNonAccessible, removeNonAccessible)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -853,7 +931,8 @@ TEST(RemoveNonAccessible, removeNonAccessible) {
 /**
  * Attendu : supprime les états non co accessibles
  */
-TEST(RemoveNonCoAccessible, removeNonCoAccessible) {
+TEST(RemoveNonCoAccessible, removeNonCoAccessible)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -871,7 +950,8 @@ TEST(RemoveNonCoAccessible, removeNonCoAccessible) {
 /**
  * Attendu : créer un automate qui est l'intersection des 2 automates
  */
-TEST(CreateIntersection, createIntersection) {
+TEST(CreateIntersection, createIntersection)
+{
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
@@ -914,11 +994,11 @@ TEST(CreateIntersection, createIntersection) {
 
 // TODO état avec transitions aa e
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
-
 
 // Test deux état initiaux avec isDeterminisc
 // Test deux état finaux avec isDeterminisc
