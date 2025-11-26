@@ -206,26 +206,27 @@ namespace fa {
 
   Automaton Automaton::createComplete(const Automaton& automaton) {
     if (automaton.isComplete()) return automaton;
+
     Automaton comp = automaton;
-    auto it = std::prev(comp.states.end());
-    int newState = it->first + 1;
-    comp.addState(newState);
-    for (char c : comp.alphabet) {
-      comp.addTransition(newState, c, newState);
+    int newState = 0;
+    while (comp.hasState(newState)) {
+      newState++;
     }
-    for (const auto& state : comp.states) {
-        int s = state.first;
-        for (char c : comp.alphabet) {
-          bool found = false;
-          for (const auto& t : comp.transitions) {
-            if (std::get<0>(t) == s && std::get<1>(t) == c) {
-              found = true;
-              break;
-            }
-          }
-          if (!found) comp.addTransition(s, c, newState);
+    comp.addState(newState);
+
+    std::map<int, std::set<char>> find;
+    for (auto t : comp.transitions) {
+      find[std::get<0>(t)].insert(std::get<1>(t));
+    }
+
+    for (auto c : comp.alphabet) {
+      for (auto s : comp.states) {
+        if (find[s.first].count(c) == 0) {
+          comp.addTransition(s.first, c, newState);
         }
       }
+    }
+
     return comp;
   }
 
