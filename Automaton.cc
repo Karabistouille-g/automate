@@ -1,6 +1,7 @@
 #include "Automaton.h"
 #include <iostream>
 #include <vector>
+#include <queue>
 using namespace std;
 
 
@@ -303,18 +304,19 @@ namespace fa {
   }
 
   bool Automaton::isLanguageEmpty() const {
-    std::vector<int> queue;
+    std::queue<int> queue;
     std::set<int> visited;
 
     for (auto s : states) {
       if (isStateInitial(s.first)) {
-          queue.push_back(s.first);
+          queue.push(s.first);
           visited.insert(s.first);
       }
     }
+
     while (!queue.empty()) {
-      int state = queue.back();
-      queue.pop_back();
+      int state = queue.front();
+      queue.pop();
       if (isStateFinal(state)) {
         return false;
       }
@@ -322,12 +324,13 @@ namespace fa {
         if (std::get<0>(t) == state) {
           int next = std::get<2>(t);
           if (visited.find(next) == visited.end()) {
-            queue.push_back(next);
+            queue.push(next);
             visited.insert(next);
           }
         }
       }
     }
+
     return true;
   }
 
@@ -382,6 +385,7 @@ namespace fa {
           visited.insert(s.first);
       }
     }
+
     while (!queue.empty()) {
       int state = queue.back();
       queue.pop_back();
@@ -395,12 +399,14 @@ namespace fa {
         }
       }
     }
+
     std::vector<int> remove;
     for (auto current : states) {
       if (visited.find(current.first) == visited.end()) {
         remove.push_back(current.first);
       }
     }
+
     for (auto rm : remove) {
       removeState(rm);
     }
