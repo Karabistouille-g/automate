@@ -304,16 +304,22 @@ namespace fa {
 
   bool Automaton::isLanguageEmpty() const {
 
-    std::map<int, std::vector<int>> ajd;
+    std::map<int, std::vector<int>> voisin;
     std::vector<int> stack;
     std::set<int> visited;
 
     for (auto t : transitions) {
-      ajd[std::get<0>(t)].push_back(std::get<2>(t));
+      voisin[std::get<0>(t)].push_back(std::get<2>(t));
+    }
+
+    for (auto t : states) {
+      if (isStateFinal(std::get<0>(t)) && isStateInitial(std::get<0>(t))) {
+        return false;
+      }
       if (isStateInitial(std::get<0>(t))) {
           stack.push_back(std::get<0>(t));
           visited.insert(std::get<0>(t));
-      }
+      } 
     }
 
     while (!stack.empty()) {
@@ -324,7 +330,7 @@ namespace fa {
         return false;
       }
 
-      for (int next : ajd[state]) {
+      for (int next : voisin[state]) {
         if (visited.find(next) == visited.end()) {
           stack.push_back(next);
           visited.insert(next);

@@ -1010,6 +1010,14 @@ TEST (LanguageEmpty, DeepGalland) {
   EXPECT_FALSE(fa.isLanguageEmpty());
 }
 
+TEST (LanguageEmpty, initialFinal) {
+  fa::Automaton fa;
+  EXPECT_TRUE(fa.addState(1));
+  fa.setStateInitial(1);
+  fa.setStateFinal(1);
+  EXPECT_FALSE(fa.isLanguageEmpty());
+}
+
 // TODO état avec transitions aa e
 
 int main(int argc, char **argv)
