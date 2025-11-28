@@ -468,14 +468,19 @@ TEST(Valid, isValidNoState)
 }
 
 /**
- * Attendu : il y a un epsilone transition
+ * Attendu : il y a un epsilon transition
  */
 TEST(Epsilon, hasEpsilon)
 {
   fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addState(3));
+  fa.setStateFinal(1);
+  fa.setStateInitial(3);
+  EXPECT_TRUE(fa.addSymbol('a'));
   EXPECT_TRUE(fa.addTransition(1, fa::Epsilon, 2));
+  EXPECT_TRUE(fa.addTransition(2, 'a', 3));
   EXPECT_TRUE(fa.hasEpsilonTransition());
 }
 
@@ -484,11 +489,17 @@ TEST(Epsilon, hasEpsilon)
  */
 TEST(Epsilon, hasEpsilonTwice)
 {
-  fa::Automaton fa;
+    fa::Automaton fa;
   EXPECT_TRUE(fa.addState(1));
   EXPECT_TRUE(fa.addState(2));
+  EXPECT_TRUE(fa.addState(3));
+  EXPECT_TRUE(fa.addState(4));
+  fa.setStateFinal(1);
+  fa.setStateInitial(4);
+  EXPECT_TRUE(fa.addSymbol('a'));
   EXPECT_TRUE(fa.addTransition(1, fa::Epsilon, 2));
-  EXPECT_TRUE(fa.addTransition(2, fa::Epsilon, 1));
+  EXPECT_TRUE(fa.addTransition(2, 'a', 3));
+  EXPECT_TRUE(fa.addTransition(3, fa::Epsilon, 4));
   EXPECT_TRUE(fa.hasEpsilonTransition());
 }
 

@@ -420,11 +420,14 @@ namespace fa {
   }
 
   bool Automaton::hasEmptyIntersectionWith(const Automaton& other) const {
-    return false;
+    Automaton intersection = Automaton::createIntersection(*this, other);
+    return intersection.isLanguageEmpty();
   }
 
   bool Automaton::isIncludedIn(const Automaton& other) const {
-    return false;
+    Automaton complement = Automaton::createComplement(other);
+    Automaton intersection = Automaton::createIntersection(*this, complement);
+    return intersection.isLanguageEmpty();
   }
 
   Automaton Automaton::createIntersection(const Automaton& lhs, const Automaton& rhs) {
@@ -576,10 +579,12 @@ namespace fa {
   }
 
   Automaton Automaton::createMinimalMoore(const Automaton& other) {
+    // TODO
     return other;
   }
 
   Automaton Automaton::createMinimalBrzozowski(const Automaton& other) {
+    // TODO
     return other;
   }
 }
