@@ -139,8 +139,8 @@ TEST(AutomatonAddState, AddSameState) {
 TEST(AutomatonAddState, AddNegativeState) {
     fa::Automaton fa;
 
-    EXPECT_TRUE(fa.addState(-1));
-    EXPECT_TRUE(fa.addState(-1));
+    EXPECT_FALSE(fa.addState(-1));
+    EXPECT_FALSE(fa.hasState(-1));
 }
 
 TEST(AutomatonAddState, AddMaxIntState) {
@@ -450,7 +450,7 @@ TEST(AutomatonRemoveTransition, UnknownOrigin) {
     EXPECT_TRUE(fa.addTransition(1, 'a', 2));
     EXPECT_TRUE(fa.hasTransition(1, 'a', 2));
 
-    EXPECT_TRUE(fa.removeTransition(3, 'a', 2));
+    EXPECT_FALSE(fa.removeTransition(3, 'a', 2));
     EXPECT_TRUE(fa.hasTransition(1, 'a', 2));
 }
 
@@ -465,7 +465,7 @@ TEST(AutomatonRemoveTransition, UnknownTarget) {
     EXPECT_TRUE(fa.addTransition(1, 'a', 2));
     EXPECT_TRUE(fa.hasTransition(1, 'a', 2));
 
-    EXPECT_TRUE(fa.removeTransition(1, 'a', 3));
+    EXPECT_FALSE(fa.removeTransition(1, 'a', 3));
     EXPECT_TRUE(fa.hasTransition(1, 'a', 2));
 }
 
@@ -540,6 +540,8 @@ TEST(AutomatonWTF, EpsilonSelfLoopOfDeath) {
 
     EXPECT_TRUE(fa.addState(1));
     fa.setStateInitial(1);
+
+    EXPECT_TRUE(fa.addSymbol('a'));
     
     EXPECT_TRUE(fa.addTransition(1, fa::Epsilon, 1));
     
@@ -773,7 +775,7 @@ TEST(AutomatonIsComplete, LonelyState){
     fa.setStateFinal(2);
 
     EXPECT_TRUE(fa.addTransition(1,'a',2));
-    EXPECT_TRUE(fa.isComplete());
+    EXPECT_FALSE(fa.isComplete());
 }
 
 

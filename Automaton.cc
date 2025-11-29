@@ -1,5 +1,6 @@
 #include "Automaton.h"
 #include <iostream>
+#include <limits>
 #include <vector>
 using namespace std;
 
@@ -24,15 +25,15 @@ namespace fa {
 
   bool Automaton::removeSymbol(char symbol) {
     if (!hasSymbol(symbol)) return false;
-    std::vector<std::tuple<int, char, int>> remove;
-    for (auto current : transitions) {
-      if (std::get<1>(current) == symbol) {
-        remove.push_back(current);
+
+    for (auto it = transitions.begin(); it != transitions.end(); ) {
+      if (std::get<1>(*it) == symbol) {
+        it = transitions.erase(it);
+      } else {
+        ++it;
       }
     }
-    for (auto rm : remove) {
-      removeTransition(std::get<0>(rm), std::get<1>(rm), std::get<2>(rm));
-    }
+
     alphabet.erase(symbol);
     return true;
   }
@@ -54,15 +55,15 @@ namespace fa {
 
   bool Automaton::removeState(int state) {
     if (!hasState(state)) return false;
-    std::vector<std::tuple<int, char, int>> remove;
-    for (auto current : transitions) {
-      if (std::get<0>(current) == state || std::get<2>(current) == state) {
-        remove.push_back(current);
+    
+    for (auto it = transitions.begin(); it != transitions.end(); ) {
+      if (std::get<0>(*it) == state || std::get<2>(*it) == state) {
+        it = transitions.erase(it);
+      } else {
+        ++it;
       }
     }
-    for (auto rm : remove) {
-      removeTransition(std::get<0>(rm), std::get<1>(rm), std::get<2>(rm));
-    }
+
     states.erase(state);
     return true;
   }
@@ -106,18 +107,16 @@ namespace fa {
   }
 
   bool Automaton::addTransition(int from, char alpha, int to) {
-    if (hasTransition(from, alpha, to)) return false;
     if (!hasState(from)) return false;
     if (!hasState(to)) return false;
     if (!hasSymbol(alpha) && alpha != fa::Epsilon) return false;
+    if (hasTransition(from, alpha, to)) return false;
     transitions.insert(std::make_tuple(from, alpha, to));
     return true;
   }
 
   bool Automaton::removeTransition(int from, char alpha, int to) {
-    if (!hasTransition(from, alpha, to)) return false;
-    transitions.erase(std::make_tuple(from, alpha, to));
-    return true;
+    return transitions.erase(std::make_tuple(from, alpha, to)) > 0;
   }
 
   bool Automaton::hasTransition(int from, char alpha, int to) const {
