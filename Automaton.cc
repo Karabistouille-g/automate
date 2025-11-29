@@ -2,6 +2,7 @@
 #include <iostream>
 #include <limits>
 #include <vector>
+#include <deque>
 using namespace std;
 
 
@@ -169,7 +170,7 @@ namespace fa {
   bool Automaton::isDeterministic() const {
 
     if (hasEpsilonTransition()) return false;
-    
+
     int cpt = 0;
     for (auto state : states) {
       if (isStateInitial(state.first)) {
@@ -178,12 +179,17 @@ namespace fa {
     }
     if (cpt != 1) return false;
 
-    std::set<std::pair<int, char>> seen;
-    for (auto current : transitions) {
-      int from = std::get<0>(current);
-      char alpha = std::get<1>(current);
-      if (seen.count({from, alpha})) return false;
-      seen.insert({from, alpha});
+    if (transitions.empty()) return true;
+    
+    auto it = transitions.begin();
+    auto next_it = std::next(it);
+
+    while (next_it != transitions.end()) {
+      if (std::get<0>(*it) == std::get<0>(*next_it) && std::get<1>(*it) == std::get<1>(*next_it)) {
+        return false;
+      }
+      it = next_it;
+      ++next_it;
     }
     return true;
   }
@@ -437,63 +443,79 @@ namespace fa {
     if (!first.isDeterministic()) first = Automaton::createDeterministic(first);
     if (!second.isDeterministic()) second = Automaton::createDeterministic(second);
 
-    for (char c : second.alphabet) first.addSymbol(c);
-    for (char c : first.alphabet) second.addSymbol(c);
-    final.alphabet = first.alphabet;
-    
     if (!first.isComplete()) first = Automaton::createComplete(first);
     if (!second.isComplete()) second = Automaton::createComplete(second);
 
-    std::set<int> nextFirst;
-    std::set<int> nextSecond;
+    std::set_intersection(
+      first.alphabet.begin(), first.alphabet.end(),
+      second.alphabet.begin(), second.alphabet.end(),
+      std::inserter(final.alphabet, final.alphabet.begin())
+    );
 
-    int firstInitial = 0;
-    int secondInitial = 0;
+    int firstInitial = -1;
+    int secondInitial = -1;
+
     for (auto s : first.states) {
       if (first.isStateInitial(s.first)) {
         firstInitial = s.first;
-        nextFirst.insert(s.first);
         break;
       }
     }
     for (auto s : second.states) {
       if (second.isStateInitial(s.first)) {
         secondInitial = s.first;
-        nextSecond.insert(secondInitial);
         break;
       }
     }
 
+    if (firstInitial == -1 || secondInitial == -1) {
+      return final;
+    }
+
     int cpt = 0;
     std::map<std::pair<int, int>, int> translate;
-    std::vector<std::pair<int, int>> queue;
-    queue.push_back({firstInitial, secondInitial});
+    std::deque<std::pair<int, int>> queue;
+    std::pair<int, int> initial = {firstInitial, secondInitial};
+    translate[initial] = cpt;
 
-    translate.insert({{firstInitial, secondInitial}, cpt});
     final.addState(cpt);
     final.setStateInitial(cpt);
+    if (first.isStateFinal(firstInitial) && second.isStateFinal(secondInitial)) {
+      final.setStateFinal(cpt);
+    }
+    queue.push_back(initial);
     cpt++;
 
     while (!queue.empty()) {
       std::pair<int, int> current = queue.front();
-      queue.erase(queue.begin());
+      queue.pop_front();
+
       int stateA = current.first;
       int stateB = current.second;
       int newStart = translate[current];
+
       for (char c : final.alphabet) {
+
         std::set<int> nextStateA = first.makeTransition({stateA}, c);
+        if (nextStateA.empty()) continue;
         int newStateA = *nextStateA.begin();
+
         std::set<int> nextStateB = second.makeTransition({stateB}, c);
+        if (nextStateB.empty()) continue;
         int newStateB = *nextStateB.begin();
 
         std::pair<int, int> newCouple = {newStateA, newStateB};
-        if (translate.count(newCouple) == 0) {
-          translate.insert({newCouple, cpt});
+
+        if (translate.find(newCouple) == translate.end()) {
+          translate[newCouple] = cpt;
           final.addState(cpt);
+
           if (first.isStateFinal(newStateA) && second.isStateFinal(newStateB)) final.setStateFinal(cpt);
-          cpt++;
+          
           queue.push_back(newCouple);
+          cpt++;
         }
+
         int newTarget = translate[newCouple];
         final.addTransition(newStart, c, newTarget);
       }
