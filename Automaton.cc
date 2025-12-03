@@ -235,6 +235,8 @@ namespace fa {
     return comp;
   }
 
+  // OUI
+
   Automaton Automaton::createComplement(const Automaton& automaton) {
     Automaton res = createDeterministic(automaton);
     res = createComplete(res);
@@ -275,7 +277,9 @@ namespace fa {
 
   std::set<int> Automaton::makeTransition(const std::set<int>& origin, char alpha) const {
     std::set<int> result;
+    if (!hasSymbol(alpha)) return result;
     for (auto from : origin) {
+      if (!hasState(from)) continue;
       for (auto current : states) {
         if (hasTransition(from, alpha, current.first))
           result.insert(current.first);
@@ -351,16 +355,16 @@ namespace fa {
     std::vector<int> queue;
     std::set<int> visited;
 
+    bool initial = false;
     for (auto s : states) {
       if (isStateInitial(s.first)) {
           queue.push_back(s.first);
           visited.insert(s.first);
+          initial = true;
       }
     }
 
-    if (queue.empty()) {
-      return;
-    }
+    if (!initial) return;
 
     while (!queue.empty()) {
       int state = queue.back();
@@ -391,12 +395,16 @@ namespace fa {
     std::vector<int> queue;
     std::set<int> visited;
 
+    bool final = false;
     for (auto s : states) {
       if (isStateFinal(s.first)) {
           queue.push_back(s.first);
           visited.insert(s.first);
+          final = true;
       }
     }
+
+    if (!final) return;
 
     while (!queue.empty()) {
       int state = queue.back();

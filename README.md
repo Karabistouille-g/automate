@@ -13,4 +13,8 @@ BigIntersectionEmbarki -> commence par 100xa + fini par 100xa
 -[ ] Demougin1
 -[ ] NoTransitionMaxel
 -[ ] ThreeTransitionsGasca
--[ ] 
+-[ ] Dillon
+-[ ] Flecy
+-[ ] Garbage
+-[ ] BadTrashNumber
+

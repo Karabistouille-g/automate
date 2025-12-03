@@ -884,6 +884,8 @@ TEST(AutomatoncreateDeterministic, DS2021){
   EXPECT_FALSE(fb.match("b"));
 }
 
+// OUI
+
 TEST(AutomatoncreateDeterministic, AlreadyDeterlinistic){
   fa::Automaton fa;
   fa::Automaton fb;
