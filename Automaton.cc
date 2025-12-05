@@ -3,13 +3,15 @@
 #include <limits>
 #include <vector>
 #include <deque>
-using namespace std;
+#include <algorithm>
+#include <iterator>
 
+using namespace std;
 
 namespace fa {
 
-    Automaton::Automaton() {
-    }
+  Automaton::Automaton() {
+  }
 
   bool Automaton::isValid() const {
     if (alphabet.empty()) return false;
@@ -27,14 +29,10 @@ namespace fa {
   bool Automaton::removeSymbol(char symbol) {
     if (!hasSymbol(symbol)) return false;
 
-    for (auto it = transitions.begin(); it != transitions.end(); ) {
-      if (std::get<1>(*it) == symbol) {
-        it = transitions.erase(it);
-      } else {
-        ++it;
-      }
+    for (auto [state, mapChar] : transitions) {
+        mapChar.erase(symbol);
     }
-
+    
     alphabet.erase(symbol);
     return true;
   }
@@ -57,11 +55,11 @@ namespace fa {
   bool Automaton::removeState(int state) {
     if (!hasState(state)) return false;
     
-    for (auto it = transitions.begin(); it != transitions.end(); ) {
-      if (std::get<0>(*it) == state || std::get<2>(*it) == state) {
-        it = transitions.erase(it);
-      } else {
-        ++it;
+    transitions.erase(state);
+
+    for (auto [src, mapChar] : transitions) {
+      for (auto [alpha, dest] : mapChar) {
+        dest.erase(state);
       }
     }
 
@@ -112,23 +110,52 @@ namespace fa {
     if (!hasState(to)) return false;
     if (!hasSymbol(alpha) && alpha != fa::Epsilon) return false;
     if (hasTransition(from, alpha, to)) return false;
-    transitions.insert(std::make_tuple(from, alpha, to));
+
+    transitions[from][alpha].insert(to);
     return true;
   }
 
   bool Automaton::removeTransition(int from, char alpha, int to) {
-    return transitions.erase(std::make_tuple(from, alpha, to)) > 0;
+    auto itState = transitions.find(from);
+    if (itState == transitions.end()) return false;
+
+    auto itChar = itState->second.find(alpha);
+    if (itChar == itState->second.end()) return false;
+
+    bool removed = itChar->second.erase(to) > 0;
+    
+    if (itChar->second.empty()) {
+        itState->second.erase(itChar);
+    }
+    
+    if (itState->second.empty()) {
+        transitions.erase(itState);
+    }
+
+    return removed;
   }
 
   bool Automaton::hasTransition(int from, char alpha, int to) const {
-    return transitions.count(std::make_tuple(from, alpha, to)) == 1;
+    auto itState = transitions.find(from);
+    if (itState == transitions.end()) return false;
+
+    auto itChar = itState->second.find(alpha);
+    if (itChar == itState->second.end()) return false;
+
+    return itChar->second.count(to) == 1;
   }
 
-  std::size_t Automaton::countTransitions() const{
-    return transitions.size();
+  std::size_t Automaton::countTransitions() const {
+    std::size_t count = 0;
+    for (const auto& [state, mapChar] : transitions) {
+        for (const auto& [alpha, dests] : mapChar) {
+            count += dests.size();
+        }
+    }
+    return count;
   }
 
-  void Automaton::prettyPrint(std::ostream& os) const{
+  void Automaton::prettyPrint(std::ostream& os) const {
     os << "Initial states : "<< std::endl;
     for (auto state : states) {
       if(isStateInitial(state.first)){
@@ -144,31 +171,41 @@ namespace fa {
     }
     os << std::endl;
     os << "Transitions:" << std::endl;
+    
     for (auto state : states) {
       os << "For state " << state.first << ":" << std::endl;
-      for (auto c : alphabet) {
-        os << "  For letter " << c << ": ";
-        for (const auto &i : transitions){
-          if((state.first == std::get<0>(i)) && (c==std::get<1>(i))){
-            os << std::get<2>(i) << " ";
+      
+      auto itTrans = transitions.find(state.first);
+      if (itTrans != transitions.end()) {
+          for (auto c : alphabet) {
+            if (itTrans->second.count(c)) {
+                os << "  For letter " << c << ": ";
+                for (int dest : itTrans->second.at(c)) {
+                    os << dest << " ";
+                }
+                os << std::endl;
+            }
           }
-        }
-        os << std::endl;
+          if (itTrans->second.count(fa::Epsilon)) {
+             os << "  For letter Epsilon: ";
+             for (int dest : itTrans->second.at(fa::Epsilon)) {
+                 os << dest << " ";
+             }
+             os << std::endl;
+          }
       }
     }
-    return ;
   }
 
   bool Automaton::hasEpsilonTransition() const {
-    for (auto state : transitions) {
-      if (std::get<1>(state) == (fa::Epsilon))
+    for (const auto [state, mapChar] : transitions) {
+      if (mapChar.count(fa::Epsilon) > 0 && !mapChar.at(fa::Epsilon).empty())
         return true;
     }
     return false;
   }
 
   bool Automaton::isDeterministic() const {
-
     if (hasEpsilonTransition()) return false;
 
     int cpt = 0;
@@ -179,33 +216,30 @@ namespace fa {
     }
     if (cpt != 1) return false;
 
-    if (transitions.empty()) return true;
-    
-    auto it = transitions.begin();
-    auto next_it = std::next(it);
-
-    while (next_it != transitions.end()) {
-      if (std::get<0>(*it) == std::get<0>(*next_it) && std::get<1>(*it) == std::get<1>(*next_it)) {
-        return false;
-      }
-      it = next_it;
-      ++next_it;
+    for (const auto& [state, mapChar] : transitions) {
+        for (const auto& [alpha, dests] : mapChar) {
+            if (dests.size() > 1) return false;
+        }
     }
     return true;
   }
 
   bool Automaton::isComplete() const {
-    std::map<int, std::set<char>> out;
-    for (auto state : transitions) {
-      out[std::get<0>(state)].insert(std::get<1>(state));
-    }
-
     for (auto state : states) {
-      if (out[state.first].size() != alphabet.size()) {
-        return false;
+      auto itTrans = transitions.find(state.first);
+      
+      if (itTrans == transitions.end()) {
+          if (!alphabet.empty()) return false;
+          continue;
+      }
+
+      for (char c : alphabet) {
+          if (itTrans->second.find(c) == itTrans->second.end() || 
+              itTrans->second.at(c).empty()) {
+              return false;
+          }
       }
     }
-
     return true;
   }
 
@@ -219,23 +253,25 @@ namespace fa {
     }
     comp.addState(newState);
 
-    std::map<int, std::set<char>> find;
-    for (auto t : comp.transitions) {
-      find[std::get<0>(t)].insert(std::get<1>(t));
+    for (auto c : comp.alphabet) {
+        comp.addTransition(newState, c, newState);
     }
 
-    for (auto c : comp.alphabet) {
-      for (auto s : comp.states) {
-        if (find[s.first].count(c) == 0) {
-          comp.addTransition(s.first, c, newState);
+
+    for (auto s : comp.states) {
+        for (auto c : comp.alphabet) {
+             if (!comp.hasTransition(s.first, c, newState) &&
+                 (!comp.transitions.count(s.first) || 
+                  !comp.transitions.at(s.first).count(c) ||
+                  comp.transitions.at(s.first).at(c).empty())) 
+             {
+                 comp.addTransition(s.first, c, newState);
+             }
         }
-      }
     }
 
     return comp;
   }
-
-  // OUI
 
   Automaton Automaton::createComplement(const Automaton& automaton) {
     Automaton res = createDeterministic(automaton);
@@ -268,8 +304,12 @@ namespace fa {
       }
     }
 
-    for (auto tuple : automaton.transitions) {
-      mirror.addTransition(std::get<2>(tuple), std::get<1>(tuple), std::get<0>(tuple));
+    for (const auto& [from, mapChar] : automaton.transitions) {
+        for (const auto& [alpha, dests] : mapChar) {
+            for (int to : dests) {
+                mirror.addTransition(to, alpha, from);
+            }
+        }
     }
 
     return mirror;
@@ -279,11 +319,13 @@ namespace fa {
     std::set<int> result;
     if (!hasSymbol(alpha)) return result;
     for (auto from : origin) {
-      if (!hasState(from)) continue;
-      for (auto current : states) {
-        if (hasTransition(from, alpha, current.first))
-          result.insert(current.first);
-      }
+        auto itState = transitions.find(from);
+        if (itState != transitions.end()) {
+            auto itChar = itState->second.find(alpha);
+            if (itChar != itState->second.end()) {
+                result.insert(itChar->second.begin(), itChar->second.end());
+            }
+        }
     }
     return result;
   }
@@ -303,31 +345,34 @@ namespace fa {
 
   bool Automaton::match(const std::string& word) const {
     std::set<int> match = readString(word);
-    bool stateFinal = false;
     for (auto state : match) {
-      if (isStateFinal(state)) stateFinal = true;
+      if (isStateFinal(state)) return true;
     }
-    if (!stateFinal) return false;
-    return true;
+    return false;
   }
 
   bool Automaton::isLanguageEmpty() const {
+    // Construction du graphe (voisin) plus rapide
+    std::unordered_map<int, std::vector<int>> voisin;
+    
+    for (const auto& [from, mapChar] : transitions) {
+        for (const auto& [alpha, dests] : mapChar) {
+            for (int to : dests) {
+                voisin[from].push_back(to);
+            }
+        }
+    }
 
-    std::map<int, std::vector<int>> voisin;
     std::vector<int> stack;
     std::set<int> visited;
 
-    for (auto t : transitions) {
-      voisin[std::get<0>(t)].push_back(std::get<2>(t));
-    }
 
     for (auto t : states) {
-      if (isStateFinal(std::get<0>(t)) && isStateInitial(std::get<0>(t))) {
-        return false;
-      }
-      if (isStateInitial(std::get<0>(t))) {
-          stack.push_back(std::get<0>(t));
-          visited.insert(std::get<0>(t));
+      int s = t.first;
+      if (isStateInitial(s)) {
+          if (isStateFinal(s)) return false;
+          stack.push_back(s);
+          visited.insert(s);
       } 
     }
 
@@ -339,18 +384,19 @@ namespace fa {
         return false;
       }
 
-      for (int next : voisin[state]) {
-        if (visited.find(next) == visited.end()) {
-          stack.push_back(next);
-          visited.insert(next);
-        }
+      if (voisin.count(state)) {
+          for (int next : voisin[state]) {
+            if (visited.find(next) == visited.end()) {
+              stack.push_back(next);
+              visited.insert(next);
+            }
+          }
       }
     }
 
     return true;
   }
 
-  // Automate doit reste valide sauf si il n'a pas d'état initial ?
   void Automaton::removeNonAccessibleStates() {
     std::vector<int> queue;
     std::set<int> visited;
@@ -364,21 +410,28 @@ namespace fa {
       }
     }
 
-    if (!initial) return;
+    if (!initial) {
+        states.clear();
+        transitions.clear();
+        return;
+    }
 
     while (!queue.empty()) {
       int state = queue.back();
       queue.pop_back();
-      for (auto t : transitions) {
-        if (std::get<0>(t) == state) {
-          int next = std::get<2>(t);
-          if (visited.find(next) == visited.end()) {
-            queue.push_back(next);
-            visited.insert(next);
+      auto itTrans = transitions.find(state);
+      if (itTrans != transitions.end()) {
+          for (auto& [alpha, dests] : itTrans->second) {
+              for (int next : dests) {
+                  if (visited.find(next) == visited.end()) {
+                      queue.push_back(next);
+                      visited.insert(next);
+                  }
+              }
           }
-        }
       }
     }
+    
     std::vector<int> remove;
     for (auto current : states) {
       if (visited.find(current.first) == visited.end()) {
@@ -390,7 +443,6 @@ namespace fa {
     }
   } 
 
-  // Automate doit reste valide sauf si il n'a pas d'état initial ?
   void Automaton::removeNonCoAccessibleStates() {
     std::vector<int> queue;
     std::set<int> visited;
@@ -404,19 +456,32 @@ namespace fa {
       }
     }
 
-    if (!final) return;
+    if (!final) {
+        states.clear();
+        transitions.clear();
+        return;
+    }
+
+    std::unordered_map<int, std::vector<int>> predecessors;
+    for (const auto& [from, mapChar] : transitions) {
+        for (const auto& [alpha, dests] : mapChar) {
+            for (int to : dests) {
+                predecessors[to].push_back(from);
+            }
+        }
+    }
 
     while (!queue.empty()) {
       int state = queue.back();
       queue.pop_back();
-      for (auto t : transitions) {
-        if (std::get<2>(t) == state) {
-          int next = std::get<0>(t);
-          if (visited.find(next) == visited.end()) {
-            queue.push_back(next);
-            visited.insert(next);
+      
+      if (predecessors.count(state)) {
+          for (int prev : predecessors[state]) {
+            if (visited.find(prev) == visited.end()) {
+                queue.push_back(prev);
+                visited.insert(prev);
+            }
           }
-        }
       }
     }
 
@@ -447,12 +512,6 @@ namespace fa {
     Automaton first = lhs;
     Automaton second = rhs;
     Automaton final;
-
-    if (!first.isDeterministic()) first = Automaton::createDeterministic(first);
-    if (!second.isDeterministic()) second = Automaton::createDeterministic(second);
-
-    if (!first.isComplete()) first = Automaton::createComplete(first);
-    if (!second.isComplete()) second = Automaton::createComplete(second);
 
     std::set_intersection(
       first.alphabet.begin(), first.alphabet.end(),
@@ -503,7 +562,6 @@ namespace fa {
       int newStart = translate[current];
 
       for (char c : final.alphabet) {
-
         std::set<int> nextStateA = first.makeTransition({stateA}, c);
         if (nextStateA.empty()) continue;
         int newStateA = *nextStateA.begin();
@@ -537,7 +595,6 @@ namespace fa {
     Automaton fa;
     fa.alphabet = other.alphabet;
 
-    // Récupération des états initiaux
     std::set<int> startSet;
     for (auto s : other.states) {
       if (other.isStateInitial(s.first)) {
@@ -546,16 +603,14 @@ namespace fa {
     }
 
     std::map<std::set<int>, int> translate;
-    std::vector<std::set<int>> queue;
+    std::deque<std::set<int>> queue;
 
-    // Ajout des états initiaux au nouvel automate
     int cpt = 0;
     translate[startSet] = cpt;
     fa.addState(cpt);
     fa.setStateInitial(cpt);
     queue.push_back(startSet);
 
-    // Vérification de l'état final initial
     bool startIsFinal = false;
     for (auto s : startSet) {
       if (other.isStateFinal(s)) {
@@ -568,33 +623,29 @@ namespace fa {
     }
     cpt++;
 
-    // Parcours en largeur des ensembles d'états
-    std::size_t p = 0;
-    while (p < queue.size()) {
-      std::set<int> currentSet = queue[p];
+    while (!queue.empty()) {
+      std::set<int> currentSet = queue.front();
+      queue.pop_front();
+      
       int currentState = translate[currentSet];
-      p++;
 
-      // Pour chaque symbole de l'alphabet, on calcule la transition
       for (char alpha : fa.alphabet) {
         std::set<int> nextSet = other.makeTransition(currentSet, alpha);
 
         if (nextSet.empty()) continue;
 
-        // Si l'ensemble d'états n'existe pas encore, on le crée
         if (translate.find(nextSet) == translate.end()) {
           translate[nextSet] = cpt;
           fa.addState(cpt);
 
-          // Vérirification de l'état final
-          bool startIsFinal = false;
+          bool isFinal = false;
           for (auto s : nextSet) {
             if (other.isStateFinal(s)) {
-              startIsFinal = true;
+              isFinal = true;
               break;
             }
           }
-          if (startIsFinal) fa.setStateFinal(cpt);
+          if (isFinal) fa.setStateFinal(cpt);
           
           queue.push_back(nextSet);
           cpt++;
@@ -617,4 +668,3 @@ namespace fa {
     return other;
   }
 }
-

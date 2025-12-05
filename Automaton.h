@@ -9,9 +9,11 @@
 #include <tuple>
 #include <map>
 #include <unordered_set>
-
+#include <unordered_map>
 
 namespace fa {
+
+
 
   constexpr char Epsilon = '\0';
 
@@ -153,8 +155,8 @@ namespace fa {
     /**
      * Make a transition from a set of states with a character.
      */
-    std::set<int> makeTransition(const std::set<int>& origin, char alpha) const;
-
+    std::set<int>makeTransition(const std::set<int>& origin, char alpha) const;
+    
     /**
      * Read the string and compute the state set after traversing the automaton
      */
@@ -231,9 +233,8 @@ namespace fa {
     enum STATE { NONE, INITIAL, FINAL, BOTH };
     std::set<char> alphabet;
     std::map<int, STATE> states;
-    std::set<std::tuple<int, char, int>> transitions;
+    std::unordered_map<int, std::map<char, std::set<int>>> transitions; 
   };
-
 }
 
 #endif // AUTOMATON_H

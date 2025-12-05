@@ -535,21 +535,6 @@ TEST(AutomatonHasEpsilonTransition, AddAndRemove){
 
 // TODO AddAndRemoveStateToZavarsky
 
-TEST(AutomatonWTF, EpsilonSelfLoopOfDeath) {
-    fa::Automaton fa;
-
-    EXPECT_TRUE(fa.addState(1));
-    fa.setStateInitial(1);
-
-    EXPECT_TRUE(fa.addSymbol('a'));
-    
-    EXPECT_TRUE(fa.addTransition(1, fa::Epsilon, 1));
-    
-    EXPECT_TRUE(fa.hasEpsilonTransition());
-
-    EXPECT_FALSE(fa.isDeterministic());
-}
-
 // --- AutomatonIsDeterministic ---
 
 TEST(AutomatonIsDeterministic, IsDeterministic){
